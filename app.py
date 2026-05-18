@@ -231,10 +231,58 @@ st.divider()
 atro_map = {"None (0%)": 0.0, "0.01%": 0.01, "0.02%": 0.02,
             "0.05%": 0.05, "0.125%": 0.125}
 
-# 年齡-眼軸常模
-AGE_NORM = {6:22.5,7:22.8,8:23.0,9:23.2,10:23.4,11:23.6,12:23.8,
-            13:24.0,14:24.1,15:24.2,16:24.3,17:24.4,18:24.5,19:24.5,20:24.5}
-norm_axl = AGE_NORM.get(age, 24.0)
+# ── 東亞兒童眼軸常模（He et al. Br J Ophthalmol 2023, n=14,127）────
+# 50th percentile（中位數），分性別，來源：上海+廣州大型研究
+EA_NORM_MALE = {
+    4:22.39,5:22.69,6:22.97,7:23.25,8:23.51,9:23.76,10:23.99,
+    11:24.22,12:24.43,13:24.62,14:24.81,15:24.98,16:25.13,
+    17:25.28,18:25.41,19:25.50,20:25.55,
+}
+EA_NORM_FEMALE = {
+    4:21.78,5:22.10,6:22.41,7:22.70,8:22.98,9:23.25,10:23.51,
+    11:23.75,12:23.97,13:24.19,14:24.39,15:24.57,16:24.75,
+    17:24.91,18:25.05,19:25.12,20:25.15,
+}
+# P10 / P50 / P90 對照表（用於百分位計算 panel）
+EA_PCTILE = {
+    7:  dict(p10_m=22.43,p50_m=23.25,p90_m=24.08, p10_f=21.89,p50_f=22.70,p90_f=23.51),
+    8:  dict(p10_m=22.67,p50_m=23.51,p90_m=24.35, p10_f=22.08,p50_f=22.98,p90_f=23.88),
+    9:  dict(p10_m=22.90,p50_m=23.76,p90_m=24.62, p10_f=22.28,p50_f=23.25,p90_f=24.22),
+    10: dict(p10_m=23.11,p50_m=23.99,p90_m=24.87, p10_f=22.47,p50_f=23.51,p90_f=24.55),
+    11: dict(p10_m=23.30,p50_m=24.22,p90_m=25.14, p10_f=22.65,p50_f=23.75,p90_f=24.85),
+    12: dict(p10_m=23.49,p50_m=24.43,p90_m=25.37, p10_f=22.82,p50_f=23.97,p90_f=25.12),
+    13: dict(p10_m=23.66,p50_m=24.62,p90_m=25.58, p10_f=22.98,p50_f=24.19,p90_f=25.40),
+    14: dict(p10_m=23.82,p50_m=24.81,p90_m=25.80, p10_f=23.13,p50_f=24.39,p90_f=25.65),
+    15: dict(p10_m=23.97,p50_m=24.98,p90_m=25.99, p10_f=23.27,p50_f=24.57,p90_f=25.87),
+    16: dict(p10_m=24.10,p50_m=25.13,p90_m=26.16, p10_f=23.40,p50_f=24.75,p90_f=26.10),
+    17: dict(p10_m=24.22,p50_m=25.28,p90_m=26.34, p10_f=23.52,p50_f=24.91,p90_f=26.30),
+    18: dict(p10_m=24.33,p50_m=25.41,p90_m=26.49, p10_f=23.63,p50_f=25.05,p90_f=26.47),
+}
+
+def get_ea_norm(age_val: int, sex_str: str) -> float:
+    if sex_str == "Male":
+        return EA_NORM_MALE.get(age_val, EA_NORM_MALE.get(18, 25.41))
+    return EA_NORM_FEMALE.get(age_val, EA_NORM_FEMALE.get(18, 25.05))
+
+def axl_percentile_approx(axl: float, age_val: int, sex_str: str) -> float:
+    """線性插值估計 AXL 在同齡同性別東亞兒童的百分位（0–100）。"""
+    pct = EA_PCTILE.get(age_val)
+    if pct is None:
+        return 50.0
+    if sex_str == "Male":
+        p10, p50, p90 = pct["p10_m"], pct["p50_m"], pct["p90_m"]
+    else:
+        p10, p50, p90 = pct["p10_f"], pct["p50_f"], pct["p90_f"]
+    if axl <= p10:
+        return float(np.interp(axl, [p10 - 2.0, p10], [2, 10]))
+    elif axl <= p50:
+        return float(np.interp(axl, [p10, p50], [10, 50]))
+    elif axl <= p90:
+        return float(np.interp(axl, [p50, p90], [50, 90]))
+    else:
+        return float(np.interp(axl, [p90, p90 + 2.0], [90, 98]))
+
+norm_axl = get_ea_norm(age, sex)
 axl_dev  = axl_base - norm_axl
 
 input_vals = {
@@ -333,6 +381,168 @@ if MODEL_OK and predict_btn:
         plt.tight_layout()
         st.pyplot(fig, use_container_width=True)
         plt.close()
+
+    # ── 東亞常模對比 Panel ────────────────────────────────────
+    st.divider()
+    st.markdown("### 📏 AXL vs. East Asian Norms")
+    st.caption(
+        "Compares this patient's axial length to same-age, same-sex East Asian children "
+        "(He et al., *Br J Ophthalmol* 2023 · n = 14,127 · Shanghai + Guangzhou)"
+    )
+
+    pctile = axl_percentile_approx(float(axl_base), age, sex)
+    pct_data = EA_PCTILE.get(age)
+
+    col_n1, col_n2 = st.columns([1, 1.6])
+
+    with col_n1:
+        # 百分位指示
+        if pctile >= 90:
+            pctile_label, pctile_color, pctile_msg = (
+                "⚠️ Very Long (≥ P90)",
+                "#C00000",
+                "AXL is in the top 10% for this age/sex group — significantly longer than peers."
+            )
+        elif pctile >= 75:
+            pctile_label, pctile_color, pctile_msg = (
+                "🔴 Long (P75–P90)",
+                "#ED7D31",
+                "AXL is above average — longer than ~75–90% of same-age peers."
+            )
+        elif pctile >= 25:
+            pctile_label, pctile_color, pctile_msg = (
+                "🟢 Average (P25–P75)",
+                "#375623",
+                "AXL is within the typical range for this age and sex."
+            )
+        else:
+            pctile_label, pctile_color, pctile_msg = (
+                "🔵 Short (< P25)",
+                "#2E75B6",
+                "AXL is shorter than ~75% of same-age peers — low axial elongation risk."
+            )
+
+        st.markdown(
+            f"<div style='background:{pctile_color}22; border-left:5px solid {pctile_color}; "
+            f"padding:14px 18px; border-radius:8px; margin-bottom:10px;'>"
+            f"<div style='font-size:0.82rem; color:#555; font-weight:600;'>Estimated Percentile</div>"
+            f"<div style='font-size:2.2rem; font-weight:800; color:{pctile_color};'>P{pctile:.0f}</div>"
+            f"<div style='font-size:0.9rem; font-weight:600; color:{pctile_color};'>{pctile_label}</div>"
+            f"</div>",
+            unsafe_allow_html=True
+        )
+        st.markdown(f"> {pctile_msg}")
+        st.markdown(
+            f"**Patient AXL:** {axl_base:.2f} mm  \n"
+            f"**East Asian P50 (age {age}, {sex}):** {norm_axl:.2f} mm  \n"
+            f"**Deviation:** {axl_dev:+.2f} mm"
+        )
+        st.caption("Source: He X et al. *Br J Ophthalmol* 2023;107:167–175")
+
+    with col_n2:
+        # 圖：常模帶（P10/P50/P90） + 病人實際量測軌跡
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+
+        # ── 常模曲線資料（橫跨 7–18 歲）
+        ages_plot = list(range(7, 19))
+        key_m = "p10_m" if sex == "Male" else "p10_f"
+        key_50 = "p50_m" if sex == "Male" else "p50_f"
+        key_90 = "p90_m" if sex == "Male" else "p90_f"
+        p10_vals = [EA_PCTILE[a][key_m]  for a in ages_plot if a in EA_PCTILE]
+        p50_vals = [EA_PCTILE[a][key_50] for a in ages_plot if a in EA_PCTILE]
+        p90_vals = [EA_PCTILE[a][key_90] for a in ages_plot if a in EA_PCTILE]
+
+        # ── 把 valid_visits（月份, AXL）轉成（實際年齡, AXL）
+        # 規則：Visit 1 = age（歲），每多 1 個月 = +1/12 歲
+        pt_ages = [age + mo / 12.0 for mo, _ in valid_visits]
+        pt_axls = [axl for _, axl in valid_visits]
+
+        # 若無 visit 就只畫基線單點（fallback）
+        if len(pt_ages) == 0:
+            pt_ages = [float(age)]
+            pt_axls = [float(axl_base)]
+
+        fig_n, ax_n = plt.subplots(figsize=(6, 3.8))
+
+        # 常模帶
+        ax_n.fill_between(ages_plot, p10_vals, p90_vals,
+                          alpha=0.13, color="#2E75B6")
+        ax_n.plot(ages_plot, p50_vals, color="#2E75B6", lw=2.2,
+                  linestyle="--", label="East Asian P50 (median)")
+        ax_n.plot(ages_plot, p10_vals, color="#2E75B6", lw=1,
+                  linestyle=":", alpha=0.55, label="P10 / P90")
+        ax_n.plot(ages_plot, p90_vals, color="#2E75B6", lw=1,
+                  linestyle=":", alpha=0.55)
+
+        # 病人軌跡
+        pt_color = pctile_color
+        if len(pt_ages) >= 2:
+            ax_n.plot(pt_ages, pt_axls, color=pt_color, lw=2.2,
+                      marker="o", markersize=7, zorder=5,
+                      label="This patient (measured)")
+        else:
+            ax_n.scatter(pt_ages, pt_axls, color=pt_color, s=130,
+                         zorder=5, label="This patient (baseline)")
+
+        # 標注每個量測點
+        for i, (pa, paxl) in enumerate(zip(pt_ages, pt_axls)):
+            visit_pctile = axl_percentile_approx(paxl, int(round(pa)), sex)
+            label_str = (
+                f"V{i+1}: {paxl:.2f}mm\n(P{visit_pctile:.0f})"
+            )
+            va = "bottom" if i % 2 == 0 else "top"
+            offset = 0.04 if va == "bottom" else -0.04
+            ax_n.annotate(
+                label_str,
+                xy=(pa, paxl),
+                xytext=(pa + 0.1, paxl + offset),
+                fontsize=7.5, color=pt_color, fontweight="bold",
+                va=va,
+            )
+
+        # 如果有 ≥2 次，畫預測延伸線（用 early_slope 延伸到 +1 年）
+        if slope_ok and len(pt_ages) >= 2:
+            last_age = pt_ages[-1]
+            last_axl = pt_axls[-1]
+            proj_age = last_age + 1.0
+            proj_axl = last_axl + early_slope * 12  # mm/yr
+            ax_n.annotate(
+                "",
+                xy=(proj_age, proj_axl),
+                xytext=(last_age, last_axl),
+                arrowprops=dict(
+                    arrowstyle="-|>", color=pt_color,
+                    lw=1.5, linestyle="dashed"
+                ),
+            )
+            ax_n.text(proj_age + 0.05, proj_axl,
+                      f"Projected\n+1yr: {proj_axl:.2f}mm",
+                      fontsize=7, color=pt_color, alpha=0.8, va="center")
+
+        ax_n.set_xlabel("Age (years)", fontsize=10)
+        ax_n.set_ylabel("Axial Length (mm)", fontsize=10)
+        ax_n.set_title(
+            f"AXL Growth Trajectory vs. East Asian Norms · {sex}",
+            fontsize=9.5, fontweight="bold"
+        )
+        ax_n.legend(fontsize=8, loc="upper left")
+        ax_n.spines[["top", "right"]].set_visible(False)
+        ax_n.grid(axis="y", linestyle="--", alpha=0.3)
+
+        # 自動調整 x 軸讓病人軌跡在中央
+        x_min = max(6.5, min(pt_ages) - 1.0)
+        x_max = min(19.5, max(pt_ages) + 2.0)
+        ax_n.set_xlim(x_min, x_max)
+        plt.tight_layout()
+        st.pyplot(fig_n, use_container_width=True)
+        plt.close()
+
+        st.caption(
+            "Dashed arrow = projected trajectory based on current slope (+1 yr).  "
+            "Blue band = East Asian P10–P90 (He et al. *Br J Ophthalmol* 2023)."
+        )
 
     # ── SHAP Waterfall ────────────────────────────────────────
     st.divider()

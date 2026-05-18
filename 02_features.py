@@ -32,12 +32,36 @@ OUT_FILE = Path(__file__).parent / "features.csv"
 
 
 # ── 年齡-眼軸常模 (文獻值，用於計算偏離量) ─────────────────────
-# 來源：Tideman et al. 2016 / IMI報告中位數 (mm)
-AGE_AXL_NORM = {
-    6: 22.5, 7: 22.8, 8: 23.0, 9: 23.2, 10: 23.4,
-    11: 23.6, 12: 23.8, 13: 24.0, 14: 24.1, 15: 24.2,
-    16: 24.3, 17: 24.4, 18: 24.5, 19: 24.5, 20: 24.5,
+# 來源：He X et al. Br J Ophthalmol 2023;107:167–175
+#       中國兒童 4–18 歲軸長百分位曲線（上海+廣州，n=14,127）
+#       使用 50th percentile（中位數）分性別，以便與東亞兒童做準確比較
+#       sex=1 (Male), sex=0 (Female)
+#
+# 設計說明：因台灣資料有 sex 欄位，這裡改用分性別常模，
+# 若 sex 未知則取男女平均作為 fallback。
+AGE_AXL_NORM_MALE = {
+    4: 22.39, 5: 22.69, 6: 22.97, 7: 23.25, 8: 23.51,
+    9: 23.76, 10: 23.99, 11: 24.22, 12: 24.43, 13: 24.62,
+    14: 24.81, 15: 24.98, 16: 25.13, 17: 25.28, 18: 25.41,
+    19: 25.50, 20: 25.55,  # 18歲後趨於穩定，以18歲值外插
 }
+AGE_AXL_NORM_FEMALE = {
+    4: 21.78, 5: 22.10, 6: 22.41, 7: 22.70, 8: 22.98,
+    9: 23.25, 10: 23.51, 11: 23.75, 12: 23.97, 13: 24.19,
+    14: 24.39, 15: 24.57, 16: 24.75, 17: 24.91, 18: 25.05,
+    19: 25.12, 20: 25.15,  # 18歲後趨於穩定，以18歲值外插
+}
+
+def get_norm_axl(age_int: int, sex: int) -> float:
+    """取東亞兒童眼軸常模（He et al. 2023）。sex=1男, sex=0女, 其他取平均。"""
+    if sex == 1:
+        return AGE_AXL_NORM_MALE.get(age_int, AGE_AXL_NORM_MALE.get(18, 25.41))
+    elif sex == 0:
+        return AGE_AXL_NORM_FEMALE.get(age_int, AGE_AXL_NORM_FEMALE.get(18, 25.05))
+    else:  # 未知性別 → 男女平均
+        m = AGE_AXL_NORM_MALE.get(age_int, 25.41)
+        f = AGE_AXL_NORM_FEMALE.get(age_int, 25.05)
+        return (m + f) / 2
 
 
 def ols_slope(months, axls):
@@ -85,11 +109,12 @@ def compute_features(grp: pd.DataFrame) -> dict:
     axl_std_6m = a_v[mask_6m].std() if mask_6m.sum() >= 2 else np.nan
 
     # ── 年齡偏離量 ────────────────────────────────────────────
-    # 以開始年齡查常模，計算 baseline AXL 偏離
+    # 以開始年齡+性別查東亞常模（He et al. 2023），計算 baseline AXL 偏離
     age = grp["開始年齡"].iloc[0]
     age_int = int(round(age)) if pd.notna(age) else None
-    norm_axl  = AGE_AXL_NORM.get(age_int, np.nan) if age_int else np.nan
-    axl_dev   = axl_baseline - norm_axl              # + 表示超過常模（近視較深）
+    sex_val  = int(grp.iloc[0]["sex"]) if pd.notna(grp.iloc[0].get("sex")) else -1
+    norm_axl = get_norm_axl(age_int, sex_val) if age_int else np.nan
+    axl_dev  = axl_baseline - norm_axl              # + 表示超過常模（近視較深）
 
     # ── 臨床基線特徵 ──────────────────────────────────────────
     row0 = grp.iloc[0]
@@ -103,8 +128,7 @@ def compute_features(grp: pd.DataFrame) -> dict:
         # 識別碼
         "eye_id"         : row0["eye_id"],
         "source"         : row0["source"],
-        "姓名"           : row0["姓名"],
-        "左右眼"         : row0["左右眼"],
+        "左右眼"         : row0.get("左右眼", np.nan),
         # 基線臨床
         "age_start"      : float(age) if pd.notna(age) else np.nan,
         "sex"            : sex,
