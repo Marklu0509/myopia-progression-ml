@@ -1,0 +1,25 @@
+# ── 病患資料（絕對不能上傳）──────────────────────
+master.csv
+features.csv
+*.xlsx
+*.xls
+*.pptx
+
+# ── 暫存 Office 鎖定檔 ───────────────────────────
+~$*
+
+# ── Python ───────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# ── OS ───────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── 注意：model.joblib 和 figures/ 要上傳 ─────────
+# model.joblib  ← 不要取消註解，要上傳
+# figures/      ← 不要取消註解，要上傳
