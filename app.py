@@ -20,6 +20,7 @@ import numpy as np
 import joblib
 import streamlit as st
 from pathlib import Path
+from datetime import date, timedelta
 
 # ── 頁面設定（必須是第一個 st 指令）────────────────────────────
 st.set_page_config(
@@ -96,21 +97,97 @@ with st.sidebar:
         "None (0%)", "0.01%", "0.02%", "0.05%", "0.125%"
     ])
 
-    st.markdown("#### 📈 Early Treatment Response (0–6 months)")
-    early_slope = st.slider(
-        "Early AXL slope (mm/month)",
-        -0.02, 0.08,
-        float(round(medians.get("early_slope_6m", 0.015), 3)),
-        step=0.001, format="%.3f",
-        help="Linear slope of axial length measurements in first 6 months of treatment"
+    st.markdown("#### 📈 Early AXL Measurements (0–6 months)")
+    st.caption("Enter follow-up visits to auto-calculate slope")
+
+    # 輸入方式選擇
+    axl_input_mode = st.radio(
+        "Input mode", ["Enter dates + AXL", "Enter months + AXL directly"],
+        horizontal=True
     )
-    axl_std = st.slider(
-        "AXL variability — SD 0–6m (mm)",
-        0.0, 0.30,
-        float(round(medians.get("axl_std_6m", 0.05), 3)),
-        step=0.005, format="%.3f",
-        help="Standard deviation of axial length measurements in first 6 months"
-    )
+
+    # 最多輸入 4 個時間點
+    NUM_PTS = 4
+    months_list = []
+    axl_list    = []
+
+    if axl_input_mode == "Enter dates + AXL":
+        start_date = st.date_input(
+            "Treatment start date",
+            value=date.today() - timedelta(days=180),
+            help="The date the patient started MiSight treatment"
+        )
+        st.markdown("**Follow-up visits:**")
+        for i in range(NUM_PTS):
+            c1, c2 = st.columns(2)
+            with c1:
+                visit_date = st.date_input(
+                    f"Visit {i+1} date",
+                    value=None,
+                    key=f"vdate_{i}",
+                    label_visibility="collapsed" if i > 0 else "visible",
+                )
+            with c2:
+                axl_val = st.number_input(
+                    f"AXL {i+1} (mm)",
+                    min_value=20.0, max_value=30.0,
+                    value=None,
+                    step=0.01, format="%.2f",
+                    key=f"vaxl_{i}",
+                    label_visibility="collapsed" if i > 0 else "visible",
+                    placeholder="mm"
+                )
+            if visit_date is not None and axl_val is not None:
+                months = (visit_date - start_date).days / 30.44
+                if 0 < months <= 8:
+                    months_list.append(months)
+                    axl_list.append(axl_val)
+
+    else:  # Enter months directly
+        st.markdown("**Months since start + AXL value:**")
+        for i in range(NUM_PTS):
+            c1, c2 = st.columns(2)
+            with c1:
+                mo = st.number_input(
+                    f"Month {i+1}",
+                    min_value=0.5, max_value=8.0,
+                    value=None, step=0.5, format="%.1f",
+                    key=f"vmo_{i}",
+                    placeholder="e.g. 3"
+                )
+            with c2:
+                axl_val = st.number_input(
+                    f"AXL {i+1} (mm)",
+                    min_value=20.0, max_value=30.0,
+                    value=None, step=0.01, format="%.2f",
+                    key=f"vaxl2_{i}",
+                    placeholder="mm"
+                )
+            if mo is not None and axl_val is not None:
+                months_list.append(float(mo))
+                axl_list.append(float(axl_val))
+
+    # 自動計算斜率和 SD
+    early_slope = float(medians.get("early_slope_6m", 0.015))
+    axl_std     = float(medians.get("axl_std_6m", 0.05))
+    slope_ok    = False
+
+    if len(months_list) >= 2:
+        m_arr = np.array(months_list)
+        a_arr = np.array(axl_list)
+        coeffs       = np.polyfit(m_arr, a_arr, 1)
+        early_slope  = float(coeffs[0])
+        axl_std      = float(a_arr.std())
+        slope_ok     = True
+        st.success(
+            f"✓ {len(months_list)} visits entered  |  "
+            f"Slope = **{early_slope:+.4f} mm/month**  |  "
+            f"SD = {axl_std:.4f} mm"
+        )
+    elif len(months_list) == 1:
+        st.warning("Enter at least 2 visits to calculate slope (using median as fallback)")
+    else:
+        st.info("No visits entered — using training cohort median as fallback")
 
     st.markdown("---")
     predict_btn = st.button("🔮 Predict Progression", type="primary", use_container_width=True)
@@ -240,6 +317,27 @@ if MODEL_OK and predict_btn:
     # ── SHAP Waterfall ────────────────────────────────────────
     st.divider()
     st.markdown("### Feature Contribution (SHAP Waterfall)")
+
+    with st.expander("💡 How to read this chart", expanded=False):
+        st.markdown("""
+**What is SHAP?**
+SHAP (SHapley Additive exPlanations) answers the question: *"Why did the model predict this specific value for this specific patient?"*
+
+The model starts from a **base value** — the average prediction across all patients in the training data.
+Then each feature either **pushes the prediction up** (🔴 red, faster progression) or **pushes it down** (🔵 blue, slower progression).
+
+**How to read the bars:**
+- The **length** of each bar = how much that feature changed the prediction
+- **Red bars**: this feature is making the model predict faster progression than average
+- **Blue bars**: this feature is making the model predict slower progression than average
+- The feature value (e.g. `= 0.014`) is shown next to the feature name
+
+**Example:** If "Early slope 0–6m = 0.014" has a long blue bar, it means this patient's early AXL slope is relatively slow compared to the training cohort, pulling the prediction *below* the base value.
+
+**Why does this matter clinically?**
+Unlike a black-box prediction, SHAP lets you tell the patient's family *why* the model thinks their child is at moderate risk — e.g. "the early measurement trend is the main factor keeping the risk moderate."
+        """)
+
     st.caption("How each input parameter contributed to this prediction")
 
     try:
