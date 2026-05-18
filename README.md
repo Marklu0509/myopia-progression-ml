@@ -30,6 +30,23 @@ Myopia (short-sightedness) affects ~30% of the global population and is projecte
 - Avoid over-treating **slow progressors** who respond well to MiSight alone
 - Provide objective, data-driven counseling to families
 
+### Ethnicity Matters: Why You Can't Directly Compare All RCTs
+
+A critical but often overlooked factor in myopia benchmarking is **ethnicity-related differences in progression rate**. East Asian children exhibit significantly faster untreated myopia progression (~0.36–0.45 mm/yr axial length) compared to multi-ethnic Western cohorts (~0.25–0.36 mm/yr), driven by a combination of genetic susceptibility and environmental factors (near work intensity, reduced outdoor time).
+
+This has direct implications for how we interpret RCT benchmarks:
+
+| Study | Cohort | Ethnicity | AXL Progression (mm/yr) |
+|---|---|---|---|
+| Liu 2021 (SV control) | Singapore | **East Asian** | 0.36 |
+| Chamberlain 2019 (MiSight 1yr) | EU / US / NZ / SG | **Multi-ethnic** | 0.13 |
+| Chamberlain 2019 (MiSight 3yr) | EU / US / NZ / SG | **Multi-ethnic** | 0.15 |
+| Chia 2012 (ATOM2, 0.01% atropine) | Singapore | **East Asian** | 0.28 |
+| Yam 2019 (LAMP, 0.1% atropine) | Hong Kong | **East Asian** | 0.19 |
+| **This study** | **Taiwan** | **East Asian** | **~0.17 (median)** |
+
+Our Taiwan cohort median of **0.17 mm/yr** is most appropriately benchmarked against East Asian RCTs (LAMP: 0.19 mm/yr; ATOM2: 0.28 mm/yr), where the untreated baseline progression rates are comparable. Direct comparison to the multi-ethnic MiSight trial (0.13 mm/yr) should account for the fact that East Asian children have a higher baseline progression risk, making a similar treatment outcome harder to achieve.
+
 ---
 
 ## Data
@@ -177,9 +194,17 @@ This project is a **retrospective exploratory analysis**, not a clinical trial. 
 
 ## References
 
-- Chamberlain P, et al. *A 3-year Randomized Clinical Trial of MiSight Lenses for Myopia Control.* Optom Vis Sci. 2019.
-- Yam JC, et al. *Low-Concentration Atropine for Myopia Progression (LAMP).* Ophthalmology. 2019.
-- Chia A, et al. *Atropine for the Treatment of Childhood Myopia (ATOM2).* Ophthalmology. 2012.
+**Clinical Trials**
+- Chamberlain P, et al. *A 3-year Randomized Clinical Trial of MiSight Lenses for Myopia Control.* Optom Vis Sci. 2019. *(Multi-ethnic)*
+- Yam JC, et al. *Low-Concentration Atropine for Myopia Progression (LAMP).* Ophthalmology. 2019. *(East Asian — Hong Kong)*
+- Chia A, et al. *Atropine for the Treatment of Childhood Myopia (ATOM2).* Ophthalmology. 2012. *(East Asian — Singapore)*
+
+**Ethnicity & Progression Rates**
+- Sankaridurg P, et al. *IMI — Clinical Myopia Control Trials and Instrumentation Report.* Invest Ophthalmol Vis Sci. 2021.
+- French AN, et al. *Risk Factors for Incident Myopia in Australian Schoolchildren.* Ophthalmology. 2013. *(Western baseline reference)*
+- Chua SY, et al. *Myopia Prevalence in Singapore.* Br J Ophthalmol. 2016. *(East Asian baseline reference)*
+
+**Normative Data**
 - Tideman JWL, et al. *Association of Axial Length With Risk of Uncorrectable Visual Impairment.* JAMA Ophthalmol. 2016.
 - IMI – Myopia Management Guidelines. *Investigative Ophthalmology & Visual Science.* 2021.
 

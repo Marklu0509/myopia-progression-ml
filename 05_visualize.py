@@ -307,22 +307,23 @@ def plot_rct_v2(df: pd.DataFrame, path: Path):
     real_age_min = int(age_real.min())
     real_age_max = int(age_real.max())
 
-    # (progression mm/yr, age_median, age_range_str, color, bar_label)
+    # (progression mm/yr, age_median, age_range_str, color, bar_label, ethnicity)
     studies = [
-        (0.36,  10.0, "6–12",    C_GRAY,    "SV Control\n(Liu 2021)"),
-        (0.13,   9.9, "8–12",   "#2E75B6",  "MiSight 1yr\n(Chamberlain 2019)"),
-        (0.15,  10.2, "8–12",   "#1F4E79",  "MiSight 3yr\n(Chamberlain 2019)"),
-        (0.28,  10.0, "6–12",   "#9DC3E6",  "Atropine 0.01%\n(ATOM2 2012)"),
-        (0.19,   9.4, "6–12",   "#70AD47",  "Atropine 0.1%\n(LAMP 2019)"),
+        (0.36,  10.0, "6–12",  C_GRAY,   "SV Control\n(Liu 2021)",           "East Asian\n(Singapore)"),
+        (0.13,   9.9, "8–12", "#2E75B6", "MiSight 1yr\n(Chamberlain 2019)",  "Multi-ethnic\n(EU/US/NZ/SG)"),
+        (0.15,  10.2, "8–12", "#1F4E79", "MiSight 3yr\n(Chamberlain 2019)",  "Multi-ethnic\n(EU/US/NZ/SG)"),
+        (0.28,  10.0, "6–12", "#9DC3E6", "Atropine 0.01%\n(ATOM2 2012)",     "East Asian\n(Singapore)"),
+        (0.19,   9.4, "6–12", "#70AD47", "Atropine 0.1%\n(LAMP 2019)",       "East Asian\n(Hong Kong)"),
         (real_med, real_age_med, f"{real_age_min}–{real_age_max}",
-         C_ACCENT, f"This Study\n(Real-world)"),
+         C_ACCENT, f"This Study\n(Real-world)",                               "East Asian\n(Taiwan) ★"),
     ]
 
-    labels   = [s[4] for s in studies]
-    values   = [s[0] for s in studies]
-    age_meds = [s[1] for s in studies]
-    age_rngs = [s[2] for s in studies]
-    colors   = [s[3] for s in studies]
+    labels     = [s[4] for s in studies]
+    values     = [s[0] for s in studies]
+    age_meds   = [s[1] for s in studies]
+    age_rngs   = [s[2] for s in studies]
+    colors     = [s[3] for s in studies]
+    ethnicities= [s[5] for s in studies]
 
     fig, ax = plt.subplots(figsize=(11, 6))
 
@@ -343,10 +344,10 @@ def plot_rct_v2(df: pd.DataFrame, path: Path):
                 fontweight="bold" if i == this_i else "normal",
                 color=C_ACCENT if i == this_i else "#333")
 
-    # X 軸標籤：研究名 + 年齡資訊
+    # X 軸標籤：研究名 + 年齡 + 族群
     xtick_labels = []
-    for i, (lbl, age_m, age_r) in enumerate(zip(labels, age_meds, age_rngs)):
-        xtick_labels.append(f"{lbl}\nAge: {age_r} yrs\n(median {age_m:.1f})")
+    for i, (lbl, age_m, age_r, eth) in enumerate(zip(labels, age_meds, age_rngs, ethnicities)):
+        xtick_labels.append(f"{lbl}\nAge: {age_r} (med {age_m:.1f})\n{eth}")
 
     ax.set_xticks(range(len(studies)))
     ax.set_xticklabels(xtick_labels, fontsize=8.2)
@@ -354,22 +355,34 @@ def plot_rct_v2(df: pd.DataFrame, path: Path):
     ax.set_ylabel("Annualized AXL Progression (mm/yr)", fontsize=11)
     ax.set_title(
         "Real-World Cohort vs Published RCT Benchmarks\n"
-        "Axial Length Progression Under Myopia Management  |  Age Context Included",
+        "Axial Length Progression Under Myopia Management  |  Age & Ethnicity Context",
         fontsize=12, fontweight="bold", pad=12
     )
-    ax.set_ylim(0, max(values) * 1.3)
+    ax.set_ylim(0, max(values) * 1.35)
     ax.spines[["top","right"]].set_visible(False)
     ax.grid(axis="y", linestyle="--", alpha=0.35, zorder=0)
+
+    # 族群圖例
+    ea_patch   = mpatches.Patch(facecolor="#FFF3CD", edgecolor="#999", label="East Asian cohort")
+    multi_patch= mpatches.Patch(facecolor="#EAF4FB", edgecolor="#999", label="Multi-ethnic cohort")
+    ax.legend(handles=[ea_patch, multi_patch], fontsize=8.5, loc="upper left")
+
+    # East Asian bar 加底色標示
+    for i, eth in enumerate(ethnicities):
+        if "East Asian" in eth:
+            bars[i].set_edgecolor("#B8860B")
+            bars[i].set_linewidth(1.8)
 
     # 備注：This study IQR
     ax.text(this_i, real_q75 + 0.03,
             f"IQR [{real_q25:.2f}, {real_q75:.2f}]",
             ha="center", fontsize=7.5, color="#7F0000")
 
-    # 資料來源
+    # 資料來源 + 族群說明
     ax.text(0.01, 0.01,
-            "Sources: Chamberlain 2019 (MiSight); Yam 2019 (LAMP); "
-            "Chia 2012 (ATOM2); Liu 2021 (SV)\nNote: Age ranges are approximate from published data.",
+            "Sources: Chamberlain 2019 (MiSight); Yam 2019 (LAMP); Chia 2012 (ATOM2); Liu 2021 (SV)\n"
+            "Note: East Asian children show faster baseline progression than multi-ethnic Western cohorts — "
+            "compare within same ethnicity for fair benchmarking.",
             transform=ax.transAxes, fontsize=7, color="#888",
             verticalalignment="bottom")
 

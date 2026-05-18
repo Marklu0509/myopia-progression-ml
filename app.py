@@ -48,12 +48,13 @@ except Exception as e:
     st.error(f"模型載入失敗：{e}")
 
 # ── 文獻參考值 ────────────────────────────────────────────────
+# (mm/yr, age_range, ethnicity_note)
 RCT_REF = {
-    "Single Vision (control)": (0.36, "6–12 yrs"),
-    "MiSight 1-year (Chamberlain 2019)": (0.13, "8–12 yrs"),
-    "MiSight 3-year (Chamberlain 2019)": (0.15, "8–12 yrs"),
-    "Atropine 0.01% (ATOM2)":           (0.28, "6–12 yrs"),
-    "Atropine 0.1% (LAMP)":             (0.19, "6–12 yrs"),
+    "Single Vision (control)\n(Liu 2021)"        : (0.36, "6–12 yrs", "East Asian · Singapore"),
+    "MiSight 1yr (Chamberlain 2019)"             : (0.13, "8–12 yrs", "Multi-ethnic · EU/US/NZ/SG"),
+    "MiSight 3yr (Chamberlain 2019)"             : (0.15, "8–12 yrs", "Multi-ethnic · EU/US/NZ/SG"),
+    "Atropine 0.01% · ATOM2 (Chia 2012)"         : (0.28, "6–12 yrs", "East Asian · Singapore"),
+    "Atropine 0.1% · LAMP (Yam 2019)"            : (0.19, "6–12 yrs", "East Asian · Hong Kong"),
 }
 
 # ── 風險分級 ──────────────────────────────────────────────────
@@ -183,19 +184,27 @@ if MODEL_OK and predict_btn:
 
     with col2:
         st.markdown("### vs. Literature")
-        for study, (ref_val, age_range) in RCT_REF.items():
+        st.caption("⚠️ East Asian children progress faster than multi-ethnic cohorts — compare within same ethnicity for fairness.")
+        for study, (ref_val, age_range, ethnicity) in RCT_REF.items():
             delta = y_pred - ref_val
             arrow = "▲" if delta > 0 else "▼"
             color = "#C00000" if delta > 0.05 else ("#375623" if delta < -0.05 else "#555")
+            # 標示 East Asian 研究（和你的台灣資料族群相近）
+            ea_badge = " 🟡" if "East Asian" in ethnicity else " ⚪"
             st.markdown(
-                f"<div style='margin-bottom:8px;'>"
-                f"<span style='font-size:0.78rem; color:#888;'>{study}<br>{age_range}</span><br>"
+                f"<div style='margin-bottom:10px; padding:6px 8px; "
+                f"border-radius:5px; background:{'#FFFBE6' if 'East Asian' in ethnicity else '#F8F8F8'};'>"
+                f"<span style='font-size:0.78rem; color:#555; font-weight:600;'>"
+                f"{study.replace(chr(10), ' ')}{ea_badge}</span><br>"
+                f"<span style='font-size:0.74rem; color:#888;'>"
+                f"{age_range} · {ethnicity}</span><br>"
                 f"<span style='font-weight:700;'>{ref_val:.2f}</span> mm/yr &nbsp;"
                 f"<span style='color:{color}; font-weight:600;'>"
                 f"{arrow} {abs(delta):.3f}</span>"
                 f"</div>",
                 unsafe_allow_html=True
             )
+        st.caption("🟡 East Asian cohorts (most comparable to this study's Taiwan population)")
 
     with col3:
         st.markdown("### Risk Gauge")
