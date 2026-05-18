@@ -89,9 +89,6 @@ with st.sidebar:
     lat   = st.radio("Eye", ["OD (Right)", "OS (Left)"], horizontal=True)
 
     st.markdown("#### 🔬 Baseline Ocular")
-    axl_base = st.slider("Baseline axial length (mm)", 21.0, 28.0,
-                         float(round(medians.get("axl_baseline", 24.0), 1)),
-                         step=0.05, format="%.2f")
     myopia_d = st.slider("Baseline myopia (D)", -12.0, -0.25,
                          float(round(medians.get("myopia_d", -3.0), 2)),
                          step=0.25, format="%.2f")
@@ -102,8 +99,8 @@ with st.sidebar:
         "None (0%)", "0.01%", "0.02%", "0.05%", "0.125%"
     ])
 
-    st.markdown("#### 📈 Early AXL Measurements (0–6 months)")
-    st.caption("Enter follow-up visits to auto-calculate slope")
+    st.markdown("#### 📈 Early AXL Measurements")
+    st.caption("Visit 1 = treatment start (baseline). Enter up to 4 visits.")
 
     # 輸入方式選擇
     axl_input_mode = st.radio(
@@ -111,94 +108,106 @@ with st.sidebar:
         horizontal=True
     )
 
-    # 最多輸入 4 個時間點
     NUM_PTS = 4
-    months_list = []
-    axl_list    = []
+    raw_visits = []   # list of (month_float, axl_float)
 
     if axl_input_mode == "Enter dates + AXL":
-        start_date = st.date_input(
-            "Treatment start date",
-            value=date.today() - timedelta(days=180),
-            help="The date the patient started MiSight treatment"
-        )
-        st.markdown("**Follow-up visits:**")
+        st.markdown("**Date & AXL per visit** *(Visit 1 = treatment start date)*")
+        dates_axls = []
         for i in range(NUM_PTS):
             c1, c2 = st.columns(2)
             with c1:
-                visit_date = st.date_input(
+                vd = st.date_input(
                     f"Visit {i+1} date",
                     value=None,
                     key=f"vdate_{i}",
-                    label_visibility="collapsed" if i > 0 else "visible",
                 )
             with c2:
-                axl_val = st.number_input(
+                va = st.number_input(
                     f"AXL {i+1} (mm)",
                     min_value=20.0, max_value=30.0,
-                    value=None,
-                    step=0.01, format="%.2f",
+                    value=None, step=0.01, format="%.2f",
                     key=f"vaxl_{i}",
-                    label_visibility="collapsed" if i > 0 else "visible",
                     placeholder="mm"
                 )
-            if visit_date is not None and axl_val is not None:
-                months = (visit_date - start_date).days / 30.44
-                if 0 < months <= 8:
-                    months_list.append(months)
-                    axl_list.append(axl_val)
+            if vd is not None and va is not None:
+                dates_axls.append((vd, float(va)))
+
+        # Visit 1 = month 0 (baseline)
+        if len(dates_axls) >= 1:
+            base_date = dates_axls[0][0]
+            for vd, va in dates_axls:
+                mo = (vd - base_date).days / 30.44
+                raw_visits.append((mo, va))
 
     else:  # Enter months directly
-        st.markdown("**Months since start + AXL value:**")
+        st.markdown("**Visit 1 = month 0 (baseline). Enter months + AXL:**")
         for i in range(NUM_PTS):
             c1, c2 = st.columns(2)
+            label_mo  = "Month (0 = start)" if i == 0 else f"Month {i+1}"
+            label_axl = "AXL (mm)"
             with c1:
                 mo = st.number_input(
-                    f"Month {i+1}",
-                    min_value=0.5, max_value=8.0,
+                    label_mo,
+                    min_value=0.0, max_value=8.0,
                     value=None, step=0.5, format="%.1f",
                     key=f"vmo_{i}",
-                    placeholder="e.g. 3"
+                    placeholder="0 = start"
                 )
             with c2:
-                axl_val = st.number_input(
-                    f"AXL {i+1} (mm)",
+                va = st.number_input(
+                    label_axl,
                     min_value=20.0, max_value=30.0,
                     value=None, step=0.01, format="%.2f",
                     key=f"vaxl2_{i}",
                     placeholder="mm"
                 )
-            if mo is not None and axl_val is not None:
-                months_list.append(float(mo))
-                axl_list.append(float(axl_val))
+            if mo is not None and va is not None:
+                raw_visits.append((float(mo), float(va)))
 
-    # 自動計算斜率和 SD
-    # 把 baseline（month 0）自動加入作為第一個點
-    all_months = [0.0] + months_list
-    all_axls   = [axl_base] + axl_list
+    # ── 從 visits 決定 baseline AXL + 計算斜率 ──────────────────
+    # baseline = Visit 1 的 AXL（month 0）；若沒有填則 fallback 到 slider
+    axl_slider = st.slider(
+        "Baseline AXL fallback (mm)",
+        21.0, 28.0,
+        float(round(medians.get("axl_baseline", 24.0), 1)),
+        step=0.05, format="%.2f",
+        help="Used only if no visits are entered above",
+        disabled=len(raw_visits) >= 1
+    )
 
     early_slope = float(medians.get("early_slope_6m", 0.015))
     axl_std     = float(medians.get("axl_std_6m", 0.05))
     slope_ok    = False
 
-    n_followup = len(months_list)   # 不含 baseline 的後續點數
+    # 有效的 visits（month 必須遞增、AXL 合理）
+    valid_visits = sorted(raw_visits, key=lambda x: x[0])
 
-    if n_followup >= 1:             # baseline + 1 個後續點 = 可以算斜率
-        m_arr = np.array(all_months)
-        a_arr = np.array(all_axls)
-        coeffs      = np.polyfit(m_arr, a_arr, 1)
-        early_slope = float(coeffs[0])
-        axl_std     = float(a_arr.std())
-        slope_ok    = True
-        st.success(
-            f"✓ Baseline + {n_followup} follow-up visit(s)  |  "
-            f"Slope = **{early_slope:+.4f} mm/month**  |  "
-            f"SD = {axl_std:.4f} mm"
-        )
-        # 把算出的 mm/yr 給使用者看
-        st.caption(f"≈ {early_slope * 12:+.3f} mm/yr annualized slope from entered data")
+    if len(valid_visits) >= 1:
+        # Visit 1 的 AXL 就是 baseline
+        axl_base = valid_visits[0][1]
+        if len(valid_visits) >= 2:
+            m_arr = np.array([v[0] for v in valid_visits])
+            a_arr = np.array([v[1] for v in valid_visits])
+            coeffs      = np.polyfit(m_arr, a_arr, 1)
+            early_slope = float(coeffs[0])
+            axl_std     = float(a_arr.std())
+            slope_ok    = True
+            st.success(
+                f"✓ {len(valid_visits)} visits  |  "
+                f"Baseline AXL = **{axl_base:.2f} mm** (Visit 1)  |  "
+                f"Slope = **{early_slope:+.4f} mm/month**"
+            )
+            st.caption(f"≈ {early_slope * 12:+.3f} mm/yr annualized · SD = {axl_std:.4f} mm")
+        else:
+            axl_std = 0.0
+            st.warning(
+                f"Baseline AXL = {axl_base:.2f} mm (Visit 1). "
+                "Enter at least one more visit to calculate slope."
+            )
     else:
-        st.info("Enter at least 1 follow-up visit — baseline (month 0) is used automatically")
+        axl_base = axl_slider
+        st.info("No visits entered — using fallback slider for baseline AXL and cohort median for slope")
 
     st.markdown("---")
     predict_btn = st.button("🔮 Predict Progression", type="primary", use_container_width=True)

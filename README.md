@@ -86,6 +86,18 @@ app.py              ← Streamlit interactive demo
 
 ---
 
+## Demo App — Input Guide
+
+The Streamlit demo (`app.py`) lets you enter a patient's clinical profile and get an instant prediction. The **Early AXL Measurements** section supports two input modes:
+
+**Option 1 — Enter dates + AXL**: Input the actual visit date and AXL measurement for each visit. Visit 1 is automatically treated as the treatment start date (month 0 / baseline). Subsequent visit months are calculated automatically from the date difference.
+
+**Option 2 — Enter months + AXL directly**: Input the number of months since treatment start (Visit 1 = month 0) and the AXL value. Useful when you already know the follow-up interval without looking up exact dates.
+
+In both modes, Visit 1 AXL becomes the **baseline AXL** (month 0). If at least two visits are entered, the app fits a linear slope to estimate early AXL velocity (`early_slope_6m`), which is the model's most predictive feature. A fallback slider is shown if no visits are entered, allowing the app to be used with cohort-median assumptions.
+
+---
+
 ## Features (Layer 1)
 
 | Feature | Clinical Rationale |
