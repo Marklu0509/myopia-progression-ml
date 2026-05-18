@@ -168,26 +168,32 @@ with st.sidebar:
                 axl_list.append(float(axl_val))
 
     # 自動計算斜率和 SD
+    # 把 baseline（month 0）自動加入作為第一個點
+    all_months = [0.0] + months_list
+    all_axls   = [axl_base] + axl_list
+
     early_slope = float(medians.get("early_slope_6m", 0.015))
     axl_std     = float(medians.get("axl_std_6m", 0.05))
     slope_ok    = False
 
-    if len(months_list) >= 2:
-        m_arr = np.array(months_list)
-        a_arr = np.array(axl_list)
-        coeffs       = np.polyfit(m_arr, a_arr, 1)
-        early_slope  = float(coeffs[0])
-        axl_std      = float(a_arr.std())
-        slope_ok     = True
+    n_followup = len(months_list)   # 不含 baseline 的後續點數
+
+    if n_followup >= 1:             # baseline + 1 個後續點 = 可以算斜率
+        m_arr = np.array(all_months)
+        a_arr = np.array(all_axls)
+        coeffs      = np.polyfit(m_arr, a_arr, 1)
+        early_slope = float(coeffs[0])
+        axl_std     = float(a_arr.std())
+        slope_ok    = True
         st.success(
-            f"✓ {len(months_list)} visits entered  |  "
+            f"✓ Baseline + {n_followup} follow-up visit(s)  |  "
             f"Slope = **{early_slope:+.4f} mm/month**  |  "
             f"SD = {axl_std:.4f} mm"
         )
-    elif len(months_list) == 1:
-        st.warning("Enter at least 2 visits to calculate slope (using median as fallback)")
+        # 把算出的 mm/yr 給使用者看
+        st.caption(f"≈ {early_slope * 12:+.3f} mm/yr annualized slope from entered data")
     else:
-        st.info("No visits entered — using training cohort median as fallback")
+        st.info("Enter at least 1 follow-up visit — baseline (month 0) is used automatically")
 
     st.markdown("---")
     predict_btn = st.button("🔮 Predict Progression", type="primary", use_container_width=True)
