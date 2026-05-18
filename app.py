@@ -62,13 +62,18 @@ RCT_REF = {
 def risk_tier(y: float):
     if y >= 0.30:
         return "🔴 Fast Progressor", "#C00000", \
-               "High risk — consider adjunct therapy escalation (e.g., higher atropine concentration)."
+               "This patient may benefit from a treatment review. " \
+               "Escalating adjunct therapy (e.g., higher atropine concentration) could be worth discussing with the patient and family, " \
+               "based on clinical judgment and individual response."
     elif y >= 0.10:
         return "🟡 Moderate Progressor", "#ED7D31", \
-               "Moderate risk — continue current treatment with close 3-month follow-up."
+               "Current treatment may be providing reasonable control. " \
+               "A closer follow-up interval (e.g., every 3 months) might help monitor whether progression is stabilizing. " \
+               "Clinical context should guide any treatment decisions."
     else:
         return "🟢 Slow Progressor", "#375623", \
-               "Low risk — current treatment appears effective. Annual review sufficient."
+               "Progression appears relatively well-controlled under current treatment. " \
+               "Continuing with routine follow-up may be appropriate, though individual variation should be considered."
 
 # ══════════════════════════════════════════════════════════════
 # Sidebar — 輸入參數
