@@ -20,6 +20,9 @@ venv/
 .DS_Store
 Thumbs.db
 
+# ── Claude Code / 工具設定（不上傳）──────────────
+.claude/
+
 # ── 注意：model.joblib 和 figures/ 要上傳 ─────────
 # model.joblib  ← 不要取消註解，要上傳
 # figures/      ← 不要取消註解，要上傳
