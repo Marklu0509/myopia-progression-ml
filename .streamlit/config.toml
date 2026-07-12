@@ -1,0 +1,12 @@
+[server]
+# headless：雲端環境不要嘗試開瀏覽器
+headless = true
+# 位址綁 0.0.0.0 讓外部（App Service 代理）連得到
+address = "0.0.0.0"
+# 在反向代理後面關掉 CORS 檢查，避免 websocket 連線被擋
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+# 不回傳使用統計給 Streamlit
+gatherUsageStats = false
