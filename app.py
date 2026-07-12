@@ -79,8 +79,7 @@ def risk_tier(y: float):
 # Sidebar — 輸入參數
 # ══════════════════════════════════════════════════════════════
 with st.sidebar:
-    st.image("https://img.icons8.com/color/96/eye.png", width=60)
-    st.title("Patient Parameters")
+    st.title("👁️ Patient Parameters")
     st.caption("Adjust sliders to match patient profile")
 
     st.markdown("#### 📋 Baseline Demographics")
@@ -167,14 +166,17 @@ with st.sidebar:
 
     # ── 從 visits 決定 baseline AXL + 計算斜率 ──────────────────
     # baseline = Visit 1 的 AXL（month 0）；若沒有填則 fallback 到 slider
-    axl_slider = st.slider(
-        "Baseline AXL fallback (mm)",
-        21.0, 28.0,
-        float(round(medians.get("axl_baseline", 24.0), 1)),
-        step=0.05, format="%.2f",
-        help="Used only if no visits are entered above",
-        disabled=len(raw_visits) >= 1
-    )
+    # 只有在完全沒填 visit 時才顯示 fallback slider；有 visit 就隱藏（改用 Visit 1）
+    if len(raw_visits) == 0:
+        axl_slider = st.slider(
+            "Baseline AXL fallback (mm)",
+            21.0, 28.0,
+            float(round(medians.get("axl_baseline", 24.0), 1)),
+            step=0.05, format="%.2f",
+            help="Used only if no visits are entered above",
+        )
+    else:
+        axl_slider = float(round(medians.get("axl_baseline", 24.0), 1))
 
     early_slope = float(medians.get("early_slope_6m", 0.015))
     axl_std     = float(medians.get("axl_std_6m", 0.05))
@@ -486,20 +488,23 @@ if MODEL_OK and predict_btn:
             ax_n.scatter(pt_ages, pt_axls, color=pt_color, s=130,
                          zorder=5, label="This patient (baseline)")
 
-        # 標注每個量測點
+        # 標注每個量測點：白底框 + 引線 + 交錯上下，避免字被線蓋住
         for i, (pa, paxl) in enumerate(zip(pt_ages, pt_axls)):
             visit_pctile = axl_percentile_approx(paxl, int(round(pa)), sex)
-            label_str = (
-                f"V{i+1}: {paxl:.2f}mm\n(P{visit_pctile:.0f})"
-            )
+            label_str = f"V{i+1}: {paxl:.2f} mm  (P{visit_pctile:.0f})"
             va = "bottom" if i % 2 == 0 else "top"
-            offset = 0.04 if va == "bottom" else -0.04
+            y_off = 0.28 if va == "bottom" else -0.28
             ax_n.annotate(
                 label_str,
                 xy=(pa, paxl),
-                xytext=(pa + 0.1, paxl + offset),
-                fontsize=7.5, color=pt_color, fontweight="bold",
-                va=va,
+                xytext=(pa, paxl + y_off),
+                ha="center", va=va,
+                fontsize=8.5, color="#14320f", fontweight="bold",
+                bbox=dict(boxstyle="round,pad=0.3", fc="white",
+                          ec=pt_color, lw=1.0, alpha=0.92),
+                arrowprops=dict(arrowstyle="-", color=pt_color,
+                                lw=0.8, alpha=0.7),
+                zorder=6,
             )
 
         # 如果有 ≥2 次，畫預測延伸線（用 early_slope 延伸到 +1 年）
@@ -517,9 +522,12 @@ if MODEL_OK and predict_btn:
                     lw=1.5, linestyle="dashed"
                 ),
             )
-            ax_n.text(proj_age + 0.05, proj_axl,
-                      f"Projected\n+1yr: {proj_axl:.2f}mm",
-                      fontsize=7, color=pt_color, alpha=0.8, va="center")
+            ax_n.text(proj_age + 0.08, proj_axl,
+                      f"Projected +1yr\n{proj_axl:.2f} mm",
+                      fontsize=7.5, color="#14320f", va="center",
+                      bbox=dict(boxstyle="round,pad=0.25", fc="white",
+                                ec=pt_color, lw=0.8, alpha=0.88),
+                      zorder=6)
 
         ax_n.set_xlabel("Age (years)", fontsize=10)
         ax_n.set_ylabel("Axial Length (mm)", fontsize=10)
