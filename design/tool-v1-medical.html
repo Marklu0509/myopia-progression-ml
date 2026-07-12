@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Myopia Progression Predictor — Medical Clean</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Figtree', 'Noto Sans', 'system-ui', 'sans-serif'],
+        },
+        colors: {
+          brand:   { 50:'#F5F6F1', 100:'#E4E7DB', 500:'#646F51', 600:'#55603F', 700:'#414A38' },
+          // override Tailwind's built-in teal ramp with an olive/sage scale
+          teal:    { 50:'#F5F6F1', 100:'#E4E7DB', 200:'#CDD3BE', 500:'#646F51', 600:'#55603F', 700:'#414A38', 800:'#2F3626' },
+          ink:     '#2F3626',
+          slow:    '#3F8F5B',
+          moderate:'#C08A2E',
+          fast:    '#B0472E',
+        },
+        boxShadow: {
+          card: '0 1px 2px rgba(47,54,38,.05), 0 8px 24px -12px rgba(100,111,81,.22)',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { background:#F5F6F1; color:#2F3626; }
+  input[type=range]{ -webkit-appearance:none; appearance:none; height:6px; border-radius:9999px; background:#E4E7DB; outline:none; }
+  input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; width:20px; height:20px; border-radius:9999px; background:#646F51; border:3px solid #fff; box-shadow:0 1px 4px rgba(100,111,81,.5); cursor:pointer; transition:transform .15s; }
+  input[type=range]::-webkit-slider-thumb:hover{ transform:scale(1.12); }
+  input[type=range]:focus-visible::-webkit-slider-thumb{ outline:3px solid #A3AD8C; outline-offset:2px; }
+  input[type=range]::-moz-range-thumb{ width:20px; height:20px; border-radius:9999px; background:#646F51; border:3px solid #fff; cursor:pointer; }
+  .seg-btn[aria-pressed="true"]{ background:#646F51; color:#fff; }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
+</style>
+</head>
+<body class="font-sans antialiased">
+
+<!-- Header -->
+<header class="sticky top-0 z-30 bg-white/85 backdrop-blur border-b border-teal-100">
+  <div class="max-w-7xl mx-auto px-5 h-16 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="grid place-items-center w-9 h-9 rounded-xl bg-brand-500 text-white">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+      </span>
+      <div>
+        <h1 class="text-[15px] font-700 font-semibold leading-tight text-ink">Myopia Progression Predictor</h1>
+        <p class="text-[11px] text-teal-600/80 leading-tight">Axial-length growth model · MiSight + atropine cohort</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="hidden sm:inline-flex items-center gap-1.5 text-[11px] font-medium text-brand-600 bg-brand-50 border border-teal-100 px-2.5 py-1 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-slow"></span> Research demo
+      </span>
+      <a href="#" class="text-[13px] font-semibold text-white bg-brand-500 hover:bg-brand-600 transition-colors px-3.5 py-2 rounded-lg cursor-pointer">About the model</a>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-5 py-7">
+  <div class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
+
+    <!-- ============ INPUT PANEL ============ -->
+    <section class="bg-white rounded-2xl shadow-card border border-teal-100/70 p-5 lg:sticky lg:top-24">
+      <h2 class="text-lg font-800 font-extrabold text-ink">Patient Parameters</h2>
+      <p class="text-[12.5px] text-teal-700/70 mt-0.5 mb-5">Adjust to match the patient profile.</p>
+
+      <!-- Demographics -->
+      <fieldset class="mb-5">
+        <legend class="text-[11px] font-700 font-bold uppercase tracking-wider text-brand-600 mb-3">Baseline demographics</legend>
+
+        <label for="age" class="flex items-center justify-between text-[13px] font-medium mb-1.5">
+          <span>Age at treatment start</span>
+          <span class="font-mono font-semibold text-brand-600"><span id="ageVal">11</span> yrs</span>
+        </label>
+        <input id="age" type="range" min="6" max="20" value="11" step="1" class="w-full mb-4" />
+
+        <span class="block text-[13px] font-medium mb-1.5">Sex</span>
+        <div class="grid grid-cols-2 gap-2 mb-4" role="group" aria-label="Sex">
+          <button data-group="sex" data-val="Female" aria-pressed="true"  class="seg-btn text-[13px] font-medium border border-teal-200 rounded-lg py-2 transition-colors cursor-pointer hover:bg-brand-50">Female</button>
+          <button data-group="sex" data-val="Male"   aria-pressed="false" class="seg-btn text-[13px] font-medium border border-teal-200 rounded-lg py-2 transition-colors cursor-pointer hover:bg-brand-50">Male</button>
+        </div>
+
+        <span class="block text-[13px] font-medium mb-1.5">Eye</span>
+        <div class="grid grid-cols-2 gap-2" role="group" aria-label="Eye">
+          <button data-group="eye" data-val="OD" aria-pressed="true"  class="seg-btn text-[13px] font-medium border border-teal-200 rounded-lg py-2 transition-colors cursor-pointer hover:bg-brand-50">OD · Right</button>
+          <button data-group="eye" data-val="OS" aria-pressed="false" class="seg-btn text-[13px] font-medium border border-teal-200 rounded-lg py-2 transition-colors cursor-pointer hover:bg-brand-50">OS · Left</button>
+        </div>
+      </fieldset>
+
+      <!-- Baseline ocular -->
+      <fieldset class="mb-5 pt-4 border-t border-teal-100">
+        <legend class="text-[11px] font-700 font-bold uppercase tracking-wider text-brand-600 mb-3">Baseline ocular</legend>
+        <label for="myopia" class="flex items-center justify-between text-[13px] font-medium mb-1.5">
+          <span>Baseline myopia</span>
+          <span class="font-mono font-semibold text-brand-600"><span id="myopiaVal">-3.00</span> D</span>
+        </label>
+        <input id="myopia" type="range" min="-12" max="-0.25" value="-3" step="0.25" class="w-full" />
+      </fieldset>
+
+      <!-- Treatment -->
+      <fieldset class="mb-5 pt-4 border-t border-teal-100">
+        <legend class="text-[11px] font-700 font-bold uppercase tracking-wider text-brand-600 mb-3">Treatment</legend>
+        <label for="misight" class="flex items-center justify-between text-[13px] font-medium mb-1.5">
+          <span>MiSight Rx power</span>
+          <span class="font-mono font-semibold text-brand-600"><span id="misightVal">-2.00</span> D</span>
+        </label>
+        <input id="misight" type="range" min="-6" max="-0.5" value="-2" step="0.25" class="w-full mb-4" />
+
+        <label for="atropine" class="block text-[13px] font-medium mb-1.5">Adjunct atropine</label>
+        <select id="atropine" class="w-full text-[13px] border border-teal-200 rounded-lg py-2 px-3 bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 cursor-pointer">
+          <option>None (0%)</option><option>0.01%</option><option>0.02%</option><option>0.05%</option><option>0.125%</option>
+        </select>
+      </fieldset>
+
+      <!-- Early AXL -->
+      <fieldset class="mb-5 pt-4 border-t border-teal-100">
+        <legend class="text-[11px] font-700 font-bold uppercase tracking-wider text-brand-600 mb-1">Early AXL measurements</legend>
+        <p class="text-[11.5px] text-teal-700/70 mb-3">Visit 1 = treatment start (baseline). Enter month + AXL (mm).</p>
+        <div id="visitRows" class="space-y-2"></div>
+      </fieldset>
+
+      <button id="predictBtn" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-700 font-bold text-[15px] py-3 rounded-xl shadow-sm transition-colors cursor-pointer focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
+        Predict Progression
+      </button>
+    </section>
+
+    <!-- ============ RESULTS ============ -->
+    <section class="space-y-6">
+
+      <!-- Empty state -->
+      <div id="emptyState" class="bg-white rounded-2xl shadow-card border border-teal-100/70 p-12 text-center">
+        <span class="grid place-items-center w-14 h-14 mx-auto rounded-2xl bg-brand-50 text-brand-500 mb-4">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+        </span>
+        <h3 class="text-lg font-800 font-extrabold text-ink">Ready to predict</h3>
+        <p class="text-[13.5px] text-teal-700/70 mt-1 max-w-sm mx-auto">Set the parameters on the left, then press <span class="font-semibold text-brand-600">Predict Progression</span> to see the annualized axial-length forecast, risk tier and literature comparison.</p>
+      </div>
+
+      <!-- Results (hidden until predict) -->
+      <div id="results" class="hidden space-y-6">
+
+        <!-- Prediction hero + gauge -->
+        <div class="grid grid-cols-1 xl:grid-cols-[1fr_1.1fr] gap-6">
+          <!-- Hero card -->
+          <div id="heroCard" class="rounded-2xl p-6 border-l-[6px] bg-white shadow-card">
+            <p class="text-[11px] font-700 font-bold uppercase tracking-wider text-teal-700/60">Predicted progression</p>
+            <div class="flex items-end gap-2 mt-1">
+              <span id="predVal" class="text-[3.4rem] leading-none font-800 font-extrabold font-mono">0.000</span>
+              <span class="text-sm text-teal-700/60 mb-2 font-medium">mm/yr</span>
+            </div>
+            <div id="tierBadge" class="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full text-[13px] font-700 font-bold">
+              <span id="tierDot" class="w-2 h-2 rounded-full"></span><span id="tierLabel"></span>
+            </div>
+            <p id="tierAdvice" class="text-[13px] leading-relaxed text-teal-800/80 mt-4 border-l-2 pl-3 border-teal-100"></p>
+            <div class="mt-4 pt-4 border-t border-teal-100 text-[12.5px] text-teal-700/80">
+              <span class="font-medium">AXL deviation from age norm:</span>
+              <span id="axlDev" class="font-mono font-semibold"></span>
+            </div>
+          </div>
+
+          <!-- Risk gauge -->
+          <div class="rounded-2xl p-6 bg-white shadow-card border border-teal-100/70">
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="text-[15px] font-800 font-extrabold text-ink">Risk gauge</h3>
+              <span class="text-[11px] text-teal-700/60 font-mono">mm/yr</span>
+            </div>
+            <p class="text-[12px] text-teal-700/60 mb-4">Annualized AXL progression band</p>
+            <div id="gauge"></div>
+            <div class="grid grid-cols-3 gap-2 mt-4 text-center">
+              <div class="rounded-lg py-2 bg-slow/10"><p class="text-[11px] font-bold text-slow">Slow</p><p class="text-[10.5px] text-teal-700/60 font-mono">&lt;0.10</p></div>
+              <div class="rounded-lg py-2 bg-moderate/10"><p class="text-[11px] font-bold text-moderate">Moderate</p><p class="text-[10.5px] text-teal-700/60 font-mono">0.10–0.30</p></div>
+              <div class="rounded-lg py-2 bg-fast/10"><p class="text-[11px] font-bold text-fast">Fast</p><p class="text-[10.5px] text-teal-700/60 font-mono">≥0.30</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trajectory + Literature -->
+        <div class="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-6">
+          <!-- Trajectory -->
+          <div class="rounded-2xl p-6 bg-white shadow-card border border-teal-100/70">
+            <h3 class="text-[15px] font-800 font-extrabold text-ink">AXL growth trajectory</h3>
+            <p class="text-[12px] text-teal-700/60 mb-3">vs. East Asian norms (He et al., <em>BJO</em> 2023 · n=14,127)</p>
+            <div id="trajectory" class="w-full"></div>
+            <div class="flex flex-wrap gap-4 mt-3 text-[11.5px] text-teal-700/70">
+              <span class="inline-flex items-center gap-1.5"><span class="w-4 h-0.5 bg-brand-500"></span>P50 median</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-4 h-0.5 bg-brand-500/40"></span>P10 / P90 band</span>
+              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slow"></span>This patient</span>
+            </div>
+          </div>
+
+          <!-- Literature -->
+          <div class="rounded-2xl p-6 bg-white shadow-card border border-teal-100/70">
+            <h3 class="text-[15px] font-800 font-extrabold text-ink">vs. Literature</h3>
+            <p class="text-[11.5px] text-moderate/90 bg-moderate/10 rounded-lg px-2.5 py-1.5 my-2 leading-snug">East Asian children progress faster — compare within same ethnicity for fairness.</p>
+            <div id="literature" class="space-y-2 mt-3"></div>
+          </div>
+        </div>
+
+        <!-- Feature contribution -->
+        <div class="rounded-2xl p-6 bg-white shadow-card border border-teal-100/70">
+          <h3 class="text-[15px] font-800 font-extrabold text-ink">Feature contribution <span class="font-normal text-teal-700/60 text-[12px]">(SHAP-style)</span></h3>
+          <p class="text-[12px] text-teal-700/60 mb-4">How each input pushed the prediction above or below the cohort baseline.</p>
+          <div id="contrib" class="space-y-2.5"></div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <footer class="max-w-7xl mx-auto mt-10 pt-6 border-t border-teal-100 text-[11.5px] text-teal-700/60 leading-relaxed">
+    <strong class="text-teal-700/80">Research / educational demo.</strong> Not a medical device and not for clinical decision-making. Predictions shown here use a client-side demonstration heuristic; the production tool runs a gradient-boosted model on the anonymized cohort.
+  </footer>
+</main>
+
+<script>
+// ---------- state ----------
+const S = { sex:'Female', eye:'OD' };
+const $ = id => document.getElementById(id);
+
+// live slider labels
+const fmt = (v,d=2)=>Number(v).toFixed(d);
+$('age').oninput    = e => $('ageVal').textContent = e.target.value;
+$('myopia').oninput = e => $('myopiaVal').textContent = fmt(e.target.value);
+$('misight').oninput= e => $('misightVal').textContent = fmt(e.target.value);
+
+// segmented buttons
+document.querySelectorAll('.seg-btn').forEach(b=>{
+  b.onclick = ()=>{
+    const g=b.dataset.group;
+    document.querySelectorAll(`.seg-btn[data-group="${g}"]`).forEach(x=>x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+    S[g]=b.dataset.val;
+  };
+});
+
+// visit rows
+const visits = [{m:0,a:''},{m:6,a:''},{m:12,a:''},{m:18,a:''}];
+function renderVisits(){
+  $('visitRows').innerHTML = visits.map((v,i)=>`
+    <div class="grid grid-cols-[auto_1fr_1fr] items-center gap-2">
+      <span class="text-[11px] font-bold text-brand-600 w-7">V${i+1}</span>
+      <input type="number" value="${v.m}" data-i="${i}" data-k="m" placeholder="month" class="vin text-[13px] border border-teal-200 rounded-lg py-1.5 px-2.5 font-mono focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+      <input type="number" value="${v.a}" data-i="${i}" data-k="a" step="0.01" placeholder="AXL mm" class="vin text-[13px] border border-teal-200 rounded-lg py-1.5 px-2.5 font-mono focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+    </div>`).join('');
+  document.querySelectorAll('.vin').forEach(inp=>inp.oninput=e=>{
+    const {i,k}=e.target.dataset; visits[i][k]= k==='a'? e.target.value : Number(e.target.value);
+  });
+}
+renderVisits();
+// prefill a plausible example
+visits[0].a=24.00; visits[1].a=24.25; renderVisits();
+
+// ---------- demo prediction heuristic ----------
+function predict(){
+  const age=+$('age').value, myopia=+$('myopia').value, misight=+$('misight').value;
+  const atro=$('atropine').selectedIndex; // 0..4
+  const vv=visits.filter(v=>v.a!=='' && !isNaN(+v.a)).map(v=>({m:+v.m,a:+v.a})).sort((a,b)=>a.m-b.m);
+  let slope=0.015;
+  if(vv.length>=2){ const f=vv[0],l=vv[vv.length-1]; slope=(l.a-f.a)/Math.max(1,(l.m-f.m)); }
+  const axlBase = vv.length? vv[0].a : 24.0;
+  // heuristic (demo only)
+  let y = 0.34 - (age-8)*0.014 - (myopia+3)*0.006 - atro*0.045 - (misight+2)*0.005 + (slope-0.015)*4;
+  y = Math.min(0.55, Math.max(0.02, y));
+  return { y, axlBase, age, slope, vv, atro, myopia, misight };
+}
+
+// risk tier
+function tier(y){
+  if(y>=0.30) return {label:'Fast progressor', color:'#B0472E',
+    advice:'This patient may benefit from a treatment review. Escalating adjunct therapy (e.g. higher atropine concentration) could be worth discussing, based on clinical judgment and individual response.'};
+  if(y>=0.10) return {label:'Moderate progressor', color:'#C08A2E',
+    advice:'Current treatment may be providing reasonable control. A closer follow-up interval (e.g. every 3 months) might help monitor whether progression is stabilizing.'};
+  return {label:'Slow progressor', color:'#3F8F5B',
+    advice:'Progression appears relatively well-controlled under current treatment. Continuing with routine follow-up may be appropriate, though individual variation should be considered.'};
+}
+
+// literature refs
+const REFS = [
+  ['Single Vision control · Liu 2021', 0.36, '6–12 yrs · East Asian', true],
+  ['MiSight 1yr · Chamberlain 2019', 0.13, '8–12 yrs · Multi-ethnic', false],
+  ['MiSight 3yr · Chamberlain 2019', 0.15, '8–12 yrs · Multi-ethnic', false],
+  ['Atropine 0.01% · ATOM2 2012', 0.28, '6–12 yrs · East Asian', true],
+  ['Atropine 0.1% · LAMP 2019', 0.19, '6–12 yrs · East Asian', true],
+];
+
+// ---------- SVG helpers ----------
+function gaugeSVG(y){
+  const W=460,H=90,pad=8, x=v=>pad+(v/0.60)*(W-2*pad);
+  const zones=[[0,0.10,'#3F8F5B'],[0.10,0.30,'#C08A2E'],[0.30,0.60,'#B0472E']];
+  const px=x(Math.min(y,0.58));
+  let bars=zones.map(([lo,hi,c])=>`<rect x="${x(lo)}" y="40" width="${x(hi)-x(lo)-2}" height="26" rx="5" fill="${c}" opacity="0.85"/>`).join('');
+  const ticks=[0,0.1,0.2,0.3,0.4,0.5,0.6].map(t=>`<text x="${x(t)}" y="82" font-size="9" fill="#7A7F68" text-anchor="middle" font-family="monospace">${t.toFixed(1)}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" class="w-full">${bars}${ticks}
+    <line x1="${px}" y1="24" x2="${px}" y2="40" stroke="#134E4A" stroke-width="2.5"/>
+    <polygon points="${px-5},24 ${px+5},24 ${px},34" fill="#134E4A"/>
+    <text x="${px}" y="18" font-size="12" font-weight="800" fill="#134E4A" text-anchor="middle" font-family="monospace">${y.toFixed(3)}</text>
+  </svg>`;
+}
+
+function trajectorySVG(p){
+  const W=560,H=300,l=44,r=16,t=16,b=36;
+  const ax0=10, ax1=13.5; // age range
+  const ay0=22.5, ay1=26; // axl range
+  const X=a=>l+((a-ax0)/(ax1-ax0))*(W-l-r);
+  const Y=v=>t+(1-(v-ay0)/(ay1-ay0))*(H-t-b);
+  // norm bands (approx linear)
+  const p50=a=>23.3+(a-10)*0.26, p10=a=>22.4+(a-10)*0.30, p90=a=>24.5+(a-10)*0.30;
+  const line=(f,step=0.25)=>{let d='';for(let a=ax0;a<=ax1+0.001;a+=step){d+=(a===ax0?'M':'L')+X(a).toFixed(1)+' '+Y(f(a)).toFixed(1)+' ';}return d;};
+  const band=()=>{let up='';for(let a=ax0;a<=ax1;a+=0.25)up+=(a===ax0?'M':'L')+X(a).toFixed(1)+' '+Y(p90(a)).toFixed(1)+' ';let dn='';for(let a=ax1;a>=ax0;a-=0.25)dn+='L'+X(a).toFixed(1)+' '+Y(p10(a)).toFixed(1)+' ';return up+dn+'Z';};
+  // patient points
+  const pts = p.vv.length? p.vv.map(v=>({a:p.age+v.m/12, y:v.a})) : [{a:p.age,y:p.axlBase}];
+  let ptPath = pts.map((q,i)=>(i?'L':'M')+X(q.a).toFixed(1)+' '+Y(q.y).toFixed(1)).join(' ');
+  let dots = pts.map(q=>`<circle cx="${X(q.a).toFixed(1)}" cy="${Y(q.y).toFixed(1)}" r="5" fill="#3F8F5B" stroke="#fff" stroke-width="2"/>`).join('');
+  // projection +1yr
+  let proj='';
+  if(pts.length>=2){const last=pts[pts.length-1]; const pa=last.a+1, py=last.y+p.slope*12;
+    proj=`<line x1="${X(last.a).toFixed(1)}" y1="${Y(last.y).toFixed(1)}" x2="${X(pa).toFixed(1)}" y2="${Y(py).toFixed(1)}" stroke="#3F8F5B" stroke-width="2" stroke-dasharray="5 4"/>
+      <polygon points="${X(pa).toFixed(1)},${Y(py).toFixed(1)} ${(X(pa)-6).toFixed(1)},${(Y(py)-3).toFixed(1)} ${(X(pa)-6).toFixed(1)},${(Y(py)+3).toFixed(1)}" fill="#3F8F5B"/>
+      <text x="${(X(pa)-2).toFixed(1)}" y="${(Y(py)-8).toFixed(1)}" font-size="10" fill="#2F3626" text-anchor="end" font-family="monospace">+1yr ${py.toFixed(2)}</text>`;}
+  // grid + labels
+  let yticks='';for(let v=23;v<=26;v++)yticks+=`<line x1="${l}" y1="${Y(v)}" x2="${W-r}" y2="${Y(v)}" stroke="#E2F3F0" stroke-width="1"/><text x="${l-6}" y="${Y(v)+3}" font-size="9" fill="#7A7F68" text-anchor="end" font-family="monospace">${v}</text>`;
+  let xticks='';for(let a=10;a<=13;a++)xticks+=`<text x="${X(a)}" y="${H-14}" font-size="9" fill="#7A7F68" text-anchor="middle" font-family="monospace">${a.toFixed(1)}</text>`;
+  const ptLabels = pts.map((q,i)=>`<text x="${X(q.a).toFixed(1)}" y="${(Y(q.y)+(i%2?22:-14)).toFixed(1)}" font-size="10" font-weight="700" fill="#2F3626" text-anchor="middle" font-family="monospace">V${i+1}:${q.y.toFixed(2)}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" class="w-full">
+    ${yticks}${xticks}
+    <path d="${band()}" fill="#646F51" opacity="0.10"/>
+    <path d="${line(p50)}" fill="none" stroke="#646F51" stroke-width="2.4" stroke-dasharray="7 5"/>
+    <path d="${line(p10)}" fill="none" stroke="#646F51" stroke-width="1" opacity="0.5" stroke-dasharray="2 3"/>
+    <path d="${line(p90)}" fill="none" stroke="#646F51" stroke-width="1" opacity="0.5" stroke-dasharray="2 3"/>
+    ${proj}
+    <path d="${ptPath}" fill="none" stroke="#3F8F5B" stroke-width="2.6"/>
+    ${dots}${ptLabels}
+    <text x="${l-30}" y="${t+8}" font-size="9" fill="#7A7F68" font-family="monospace" transform="rotate(-90 ${l-30} ${H/2})">Axial length (mm)</text>
+    <text x="${(l+W)/2}" y="${H-2}" font-size="9.5" fill="#7A7F68" text-anchor="middle">Age (years)</text>
+  </svg>`;
+}
+
+// ---------- render ----------
+$('predictBtn').onclick = ()=>{
+  const p = predict(), tg = tier(p.y);
+  $('emptyState').classList.add('hidden');
+  $('results').classList.remove('hidden');
+
+  // hero
+  $('predVal').textContent = p.y.toFixed(3);
+  $('predVal').style.color = tg.color;
+  $('heroCard').style.borderLeftColor = tg.color;
+  $('heroCard').style.background = tg.color+'0d';
+  $('tierBadge').style.background = tg.color+'1f';
+  $('tierBadge').style.color = tg.color;
+  $('tierDot').style.background = tg.color;
+  $('tierLabel').textContent = tg.label;
+  $('tierAdvice').textContent = tg.advice;
+  const normAxl = (23.3+(p.age-10)*0.26).toFixed(2);
+  const dev = (p.axlBase-normAxl);
+  $('axlDev').textContent = `${dev>=0?'+':''}${dev.toFixed(2)} mm  (norm for age ${p.age}: ${normAxl} mm)`;
+
+  // gauge
+  $('gauge').innerHTML = gaugeSVG(p.y);
+
+  // trajectory
+  $('trajectory').innerHTML = trajectorySVG(p);
+
+  // literature
+  $('literature').innerHTML = REFS.map(([name,ref,meta,ea])=>{
+    const d=p.y-ref, up=d>0, c= d>0.05?'#B0472E':(d<-0.05?'#3F8F5B':'#64748b');
+    return `<div class="rounded-lg px-3 py-2 ${ea?'bg-amber-50 border border-amber-100':'bg-teal-50/40'}">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-[12px] font-semibold text-ink">${name}${ea?' <span class=\'text-moderate\'>●</span>':''}</span>
+        <span class="text-[12px] font-mono font-bold" style="color:${c}">${up?'▲':'▼'} ${Math.abs(d).toFixed(3)}</span>
+      </div>
+      <div class="flex items-center justify-between mt-0.5">
+        <span class="text-[10.5px] text-teal-700/55">${meta}</span>
+        <span class="text-[11px] font-mono text-teal-700/70">${ref.toFixed(2)} mm/yr</span>
+      </div>
+    </div>`;
+  }).join('') + `<p class="text-[10.5px] text-teal-700/55 pt-1"><span class="text-moderate">●</span> East Asian cohorts — most comparable to a Taiwan population.</p>`;
+
+  // feature contribution (demo)
+  const contribs = [
+    ['Early AXL slope (0–6m)', (p.slope-0.015)*4],
+    ['Baseline myopia', -(p.myopia+3)*0.006],
+    ['Age at start', -(p.age-8)*0.014],
+    ['Adjunct atropine', -p.atro*0.045],
+    ['MiSight Rx power', -(p.misight+2)*0.005],
+  ].sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+  const maxC = Math.max(...contribs.map(c=>Math.abs(c[1])),0.02);
+  $('contrib').innerHTML = contribs.map(([n,v])=>{
+    const pos=v>0, w=Math.max(4,Math.abs(v)/maxC*50), c=pos?'#B0472E':'#646F51';
+    return `<div class="flex items-center gap-3 text-[12.5px]">
+      <span class="w-40 shrink-0 text-teal-800/80">${n}</span>
+      <div class="flex-1 flex items-center">
+        <div class="w-1/2 flex justify-end"><div style="width:${pos?0:w}%;background:${c}" class="h-4 rounded-l"></div></div>
+        <div class="w-px h-5 bg-teal-200"></div>
+        <div class="w-1/2"><div style="width:${pos?w:0}%;background:${c}" class="h-4 rounded-r"></div></div>
+      </div>
+      <span class="w-14 text-right font-mono font-semibold" style="color:${c}">${v>=0?'+':''}${v.toFixed(3)}</span>
+    </div>`;
+  }).join('');
+
+  $('results').scrollIntoView({behavior:'smooth',block:'nearest'});
+};
+</script>
+</body>
+</html>
