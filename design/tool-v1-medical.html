@@ -247,10 +247,10 @@ document.querySelectorAll('.seg-btn').forEach(b=>{
 const visits = [{m:0,a:''},{m:6,a:''},{m:12,a:''},{m:18,a:''}];
 function renderVisits(){
   $('visitRows').innerHTML = visits.map((v,i)=>`
-    <div class="grid grid-cols-[auto_1fr_1fr] items-center gap-2">
+    <div class="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] items-center gap-2">
       <span class="text-[11px] font-bold text-brand-600 w-7">V${i+1}</span>
-      <input type="number" value="${v.m}" data-i="${i}" data-k="m" placeholder="month" class="vin text-[13px] border border-teal-200 rounded-lg py-1.5 px-2.5 font-mono focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
-      <input type="number" value="${v.a}" data-i="${i}" data-k="a" step="0.01" placeholder="AXL mm" class="vin text-[13px] border border-teal-200 rounded-lg py-1.5 px-2.5 font-mono focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+      <input type="number" value="${v.m}" data-i="${i}" data-k="m" placeholder="month" class="vin w-full min-w-0 text-[13px] border border-teal-200 rounded-lg py-1.5 px-2.5 font-mono focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
+      <input type="number" value="${v.a}" data-i="${i}" data-k="a" step="0.01" placeholder="AXL mm" class="vin w-full min-w-0 text-[13px] border border-teal-200 rounded-lg py-1.5 px-2.5 font-mono focus:ring-2 focus:ring-brand-500 focus:border-brand-500" />
     </div>`).join('');
   document.querySelectorAll('.vin').forEach(inp=>inp.oninput=e=>{
     const {i,k}=e.target.dataset; visits[i][k]= k==='a'? e.target.value : Number(e.target.value);
