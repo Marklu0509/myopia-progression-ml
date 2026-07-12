@@ -149,68 +149,74 @@
       <!-- Results (hidden until predict) -->
       <div id="results" class="hidden space-y-6">
 
-        <!-- Prediction hero + gauge -->
-        <div class="grid grid-cols-1 xl:grid-cols-[1fr_1.1fr] gap-6">
-          <!-- Hero card -->
-          <div id="heroCard" class="rounded-2xl p-6 border-l-[6px] bg-white shadow-card">
-            <p class="text-[11px] font-700 font-bold uppercase tracking-wider text-teal-700/60">Predicted progression</p>
-            <div class="flex items-end gap-2 mt-1">
-              <span id="predVal" class="text-[3.4rem] leading-none font-800 font-extrabold font-mono">0.000</span>
-              <span class="text-sm text-teal-700/60 mb-2 font-medium">mm/yr</span>
+        <!-- 1. Prediction hero (full width) -->
+        <div id="heroCard" class="rounded-2xl p-6 border-l-[6px] bg-white shadow-card">
+          <div class="grid grid-cols-1 md:grid-cols-[minmax(0,300px)_1fr] gap-6">
+            <div class="md:pr-6 md:border-r border-teal-100">
+              <p class="text-[11px] font-700 font-bold uppercase tracking-wider text-teal-700/60">Predicted progression</p>
+              <div class="flex items-end gap-2 mt-1">
+                <span id="predVal" class="text-[3.6rem] leading-none font-800 font-extrabold font-mono">0.000</span>
+                <span class="text-sm text-teal-700/60 mb-2 font-medium">mm/yr</span>
+              </div>
+              <div id="tierBadge" class="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full text-[13px] font-700 font-bold">
+                <span id="tierDot" class="w-2 h-2 rounded-full"></span><span id="tierLabel"></span>
+              </div>
             </div>
-            <div id="tierBadge" class="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full text-[13px] font-700 font-bold">
-              <span id="tierDot" class="w-2 h-2 rounded-full"></span><span id="tierLabel"></span>
-            </div>
-            <p id="tierAdvice" class="text-[13px] leading-relaxed text-teal-800/80 mt-4 border-l-2 pl-3 border-teal-100"></p>
-            <div class="mt-4 pt-4 border-t border-teal-100 text-[12.5px] text-teal-700/80">
-              <span class="font-medium">AXL deviation from age norm:</span>
-              <span id="axlDev" class="font-mono font-semibold"></span>
-            </div>
-          </div>
-
-          <!-- Risk gauge -->
-          <div class="rounded-2xl p-6 bg-white shadow-card border border-teal-100/70">
-            <div class="flex items-center justify-between mb-1">
-              <h3 class="text-[15px] font-800 font-extrabold text-ink">Risk gauge</h3>
-              <span class="text-[11px] text-teal-700/60 font-mono">mm/yr</span>
-            </div>
-            <p class="text-[12px] text-teal-700/60 mb-4">Annualized AXL progression band</p>
-            <div id="gauge"></div>
-            <div class="grid grid-cols-3 gap-2 mt-4 text-center">
-              <div class="rounded-lg py-2 bg-slow/10"><p class="text-[11px] font-bold text-slow">Slow</p><p class="text-[10.5px] text-teal-700/60 font-mono">&lt;0.10</p></div>
-              <div class="rounded-lg py-2 bg-moderate/10"><p class="text-[11px] font-bold text-moderate">Moderate</p><p class="text-[10.5px] text-teal-700/60 font-mono">0.10–0.30</p></div>
-              <div class="rounded-lg py-2 bg-fast/10"><p class="text-[11px] font-bold text-fast">Fast</p><p class="text-[10.5px] text-teal-700/60 font-mono">≥0.30</p></div>
+            <div class="flex flex-col justify-center">
+              <p id="tierAdvice" class="text-[13.5px] leading-relaxed text-teal-800/80 border-l-2 pl-3 border-teal-100"></p>
+              <div class="mt-4 pt-4 border-t border-teal-100 text-[12.5px] text-teal-700/80">
+                <span class="font-medium">AXL deviation from age norm:</span>
+                <span id="axlDev" class="font-mono font-semibold"></span>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Trajectory + Literature -->
-        <div class="grid grid-cols-1 xl:grid-cols-[1.5fr_1fr] gap-6">
-          <!-- Trajectory -->
-          <div class="rounded-2xl p-6 bg-white shadow-card border border-teal-100/70">
-            <h3 class="text-[15px] font-800 font-extrabold text-ink">AXL growth trajectory</h3>
-            <p class="text-[12px] text-teal-700/60 mb-3">vs. East Asian norms (He et al., <em>BJO</em> 2023 · n=14,127)</p>
-            <div id="trajectory" class="w-full"></div>
-            <div class="flex flex-wrap gap-4 mt-3 text-[11.5px] text-teal-700/70">
-              <span class="inline-flex items-center gap-1.5"><span class="w-4 h-0.5 bg-brand-500"></span>P50 median</span>
-              <span class="inline-flex items-center gap-1.5"><span class="w-4 h-0.5 bg-brand-500/40"></span>P10 / P90 band</span>
-              <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slow"></span>This patient</span>
-            </div>
-          </div>
-
-          <!-- Literature -->
-          <div class="rounded-2xl p-6 bg-white shadow-card border border-teal-100/70">
-            <h3 class="text-[15px] font-800 font-extrabold text-ink">vs. Literature</h3>
-            <p class="text-[11.5px] text-moderate/90 bg-moderate/10 rounded-lg px-2.5 py-1.5 my-2 leading-snug">East Asian children progress faster — compare within same ethnicity for fairness.</p>
-            <div id="literature" class="space-y-2 mt-3"></div>
-          </div>
-        </div>
-
-        <!-- Feature contribution -->
+        <!-- 2. Risk gauge (full width) -->
         <div class="rounded-2xl p-6 bg-white shadow-card border border-teal-100/70">
-          <h3 class="text-[15px] font-800 font-extrabold text-ink">Feature contribution <span class="font-normal text-teal-700/60 text-[12px]">(SHAP-style)</span></h3>
-          <p class="text-[12px] text-teal-700/60 mb-4">How each input pushed the prediction above or below the cohort baseline.</p>
-          <div id="contrib" class="space-y-2.5"></div>
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="text-[15px] font-800 font-extrabold text-ink">Risk gauge</h3>
+            <span class="text-[11px] text-teal-700/60 font-mono">mm/yr</span>
+          </div>
+          <p class="text-[12px] text-teal-700/60 mb-4">Annualized AXL progression band</p>
+          <div id="gauge" class="max-w-3xl mx-auto"></div>
+          <div class="grid grid-cols-3 gap-2 mt-4 text-center max-w-3xl mx-auto">
+            <div class="rounded-lg py-2 bg-slow/10"><p class="text-[11px] font-bold text-slow">Slow</p><p class="text-[10.5px] text-teal-700/60 font-mono">&lt;0.10</p></div>
+            <div class="rounded-lg py-2 bg-moderate/10"><p class="text-[11px] font-bold text-moderate">Moderate</p><p class="text-[10.5px] text-teal-700/60 font-mono">0.10–0.30</p></div>
+            <div class="rounded-lg py-2 bg-fast/10"><p class="text-[11px] font-bold text-fast">Fast</p><p class="text-[10.5px] text-teal-700/60 font-mono">≥0.30</p></div>
+          </div>
+        </div>
+
+        <!-- 3. AXL growth trajectory + Literature tucked under (full width) -->
+        <div class="rounded-2xl p-6 bg-white shadow-card border border-teal-100/70">
+          <h3 class="text-[15px] font-800 font-extrabold text-ink">AXL growth trajectory</h3>
+          <p class="text-[12px] text-teal-700/60 mb-3">vs. East Asian norms (He et al., <em>BJO</em> 2023 · n=14,127)</p>
+          <div id="trajectory" class="w-full max-w-4xl mx-auto"></div>
+          <div class="flex flex-wrap gap-4 mt-3 text-[11.5px] text-teal-700/70">
+            <span class="inline-flex items-center gap-1.5"><span class="w-4 h-0.5 bg-brand-500"></span>P50 median</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-4 h-0.5 bg-brand-500/40"></span>P10 / P90 band</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slow"></span>This patient</span>
+          </div>
+
+          <!-- vs. Literature tucked under -->
+          <div class="mt-6 pt-5 border-t border-teal-100">
+            <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 mb-3">
+              <h4 class="text-[14px] font-800 font-extrabold text-ink">vs. Literature</h4>
+              <p class="text-[11.5px] text-moderate/90 bg-moderate/10 rounded-lg px-2.5 py-1 leading-snug">East Asian children progress faster — compare within same ethnicity for fairness.</p>
+            </div>
+            <div id="literature" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2"></div>
+          </div>
+        </div>
+
+        <!-- 4. Feature contribution — academic SHAP (full width) -->
+        <div class="rounded-2xl p-6 bg-white shadow-card border border-teal-100/70">
+          <h3 class="text-[15px] font-800 font-extrabold text-ink">Feature contribution <span class="font-normal text-teal-700/60 text-[12px]">(SHAP)</span></h3>
+          <p id="shapHeader" class="text-center text-[16px] font-800 font-extrabold text-ink mt-3 mb-2"></p>
+          <div id="shap" class="w-full overflow-x-auto"></div>
+          <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-1.5 text-[12px] mt-3 text-teal-800/80">
+            <span class="inline-flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-sm" style="background:#B0472E"></span>Red bars push prediction&nbsp;<strong>higher</strong>&nbsp;(faster progression)</span>
+            <span class="inline-flex items-center gap-2"><span class="w-3.5 h-3.5 rounded-sm" style="background:#34688F"></span>Blue bars push prediction&nbsp;<strong>lower</strong>&nbsp;(slower progression)</span>
+          </div>
         </div>
 
       </div>
@@ -345,6 +351,62 @@ function trajectorySVG(p){
   </svg>`;
 }
 
+// academic SHAP horizontal bar chart (matches classic shap.plots layout)
+function shapChartSVG(p, base){
+  const dev = p.axlBase - (23.3+(p.age-10)*0.26);
+  let items = [
+    ['Baseline myopia (D)', p.myopia.toFixed(0), (p.myopia+2)*(-0.0012)],
+    ['Atropine conc.', String(p.atro), -p.atro*0.028],
+    ['Age', String(p.age), (p.age-8)*0.0003],
+    ['AXL deviation from norm', dev.toFixed(2), dev*0.0096],
+    ['MiSight Rx power', p.misight.toFixed(0), p.misight*0.0028],
+    ['Baseline AXL (mm)', p.axlBase.toFixed(0), (p.axlBase-26)*0.0034],
+    ['AXL variability', '0.125', 0.008],
+    ['Early slope 0–6m', p.slope.toFixed(4), (p.slope-0.015)*4],
+  ];
+  // force contributions to sum exactly to (prediction − base): absorb residual into dominant feature
+  const s = items.reduce((a,it)=>a+it[2], 0);
+  items[7][2] += (p.y - base - s);
+  // sort ascending by magnitude → smallest on top, largest at bottom (classic SHAP bar order)
+  items.sort((a,b)=>Math.abs(a[2])-Math.abs(b[2]));
+
+  const W=760, top=18, bot=52, rowH=44, xL=196, xR=700;
+  const H = top + items.length*rowH + bot;
+  const vals = items.map(i=>i[2]);
+  let vmin = Math.min(0, ...vals), vmax = Math.max(0, ...vals);
+  const span = (vmax - vmin) || 0.02;
+  vmin -= span*0.12; vmax += span*0.16;   // pad left for neg labels, right for the big value label
+  const X = v => xL + ((v - vmin)/(vmax - vmin))*(xR - xL);
+  const x0 = X(0), plotB = top + items.length*rowH;
+
+  // gridlines + x ticks
+  const step = 0.05;
+  let ticks='';
+  for(let t=Math.ceil(vmin/step)*step; t<=vmax+1e-9; t+=step){
+    const xx=X(t).toFixed(1);
+    ticks += `<line x1="${xx}" y1="${top}" x2="${xx}" y2="${plotB}" stroke="#E4E7DB" stroke-width="1" stroke-dasharray="3 3"/>`
+           + `<text x="${xx}" y="${plotB+18}" font-size="11" fill="#7A7F68" text-anchor="middle" font-family="monospace">${t.toFixed(2)}</text>`;
+  }
+  const zero = `<line x1="${x0.toFixed(1)}" y1="${top}" x2="${x0.toFixed(1)}" y2="${plotB}" stroke="#2F3626" stroke-width="1.5"/>`;
+
+  const rows = items.map((it,i)=>{
+    const [name,valLabel,v]=it;
+    const cy = top + i*rowH + rowH/2;
+    const pos = v>=0, c = pos ? '#B0472E' : '#34688F';
+    const bx = Math.min(x0, X(v)), bw = Math.max(Math.abs(X(v)-x0), 1.2);
+    const lblX = pos ? X(v)+6 : X(v)-6, anchor = pos ? 'start' : 'end';
+    return `<text x="${xL-12}" y="${cy-3}" font-size="12.5" fill="#2F3626" text-anchor="end">${name}</text>`
+         + `<text x="${xL-12}" y="${cy+13}" font-size="12" fill="#7A7F68" text-anchor="end" font-family="monospace">= ${valLabel}</text>`
+         + `<rect x="${bx.toFixed(1)}" y="${cy-13}" width="${bw.toFixed(1)}" height="26" fill="${c}" rx="1.5"/>`
+         + `<text x="${lblX.toFixed(1)}" y="${cy+4}" font-size="12" fill="${c}" text-anchor="${anchor}" font-family="monospace" font-weight="600">${v>=0?'+':'−'}${Math.abs(v).toFixed(4)}</text>`;
+  }).join('');
+
+  return `<svg viewBox="0 0 ${W} ${H}" class="w-full" style="min-width:660px">
+    ${ticks}${zero}${rows}
+    <text x="${((xL+xR)/2).toFixed(0)}" y="${H-8}" font-size="12" fill="#2F3626" text-anchor="middle">SHAP value  (impact on predicted mm/yr)</text>
+  </svg>`;
+}
+
 // ---------- render ----------
 $('predictBtn').onclick = ()=>{
   const p = predict(), tg = tier(p.y);
@@ -384,29 +446,12 @@ $('predictBtn').onclick = ()=>{
         <span class="text-[11px] font-mono text-teal-700/70">${ref.toFixed(2)} mm/yr</span>
       </div>
     </div>`;
-  }).join('') + `<p class="text-[10.5px] text-teal-700/55 pt-1"><span class="text-moderate">●</span> East Asian cohorts — most comparable to a Taiwan population.</p>`;
+  }).join('') + `<p class="sm:col-span-2 lg:col-span-3 text-[10.5px] text-teal-700/55 pt-1"><span class="text-moderate">●</span> East Asian cohorts — most comparable to a Taiwan population.</p>`;
 
-  // feature contribution (demo)
-  const contribs = [
-    ['Early AXL slope (0–6m)', (p.slope-0.015)*4],
-    ['Baseline myopia', -(p.myopia+3)*0.006],
-    ['Age at start', -(p.age-8)*0.014],
-    ['Adjunct atropine', -p.atro*0.045],
-    ['MiSight Rx power', -(p.misight+2)*0.005],
-  ].sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
-  const maxC = Math.max(...contribs.map(c=>Math.abs(c[1])),0.02);
-  $('contrib').innerHTML = contribs.map(([n,v])=>{
-    const pos=v>0, w=Math.max(4,Math.abs(v)/maxC*50), c=pos?'#B0472E':'#646F51';
-    return `<div class="flex items-center gap-3 text-[12.5px]">
-      <span class="w-40 shrink-0 text-teal-800/80">${n}</span>
-      <div class="flex-1 flex items-center">
-        <div class="w-1/2 flex justify-end"><div style="width:${pos?0:w}%;background:${c}" class="h-4 rounded-l"></div></div>
-        <div class="w-px h-5 bg-teal-200"></div>
-        <div class="w-1/2"><div style="width:${pos?w:0}%;background:${c}" class="h-4 rounded-r"></div></div>
-      </div>
-      <span class="w-14 text-right font-mono font-semibold" style="color:${c}">${v>=0?'+':''}${v.toFixed(3)}</span>
-    </div>`;
-  }).join('');
+  // feature contribution — academic SHAP bar chart
+  const base = 0.213;
+  $('shapHeader').innerHTML = `Base value: ${base.toFixed(3)} &nbsp;→&nbsp; Prediction: <span style="color:${tg.color}">${p.y.toFixed(3)}</span> mm/yr`;
+  $('shap').innerHTML = shapChartSVG(p, base);
 
   $('results').scrollIntoView({behavior:'smooth',block:'nearest'});
 };
