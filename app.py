@@ -212,7 +212,7 @@ with st.sidebar:
         st.info("No visits entered — using fallback slider for baseline AXL and cohort median for slope")
 
     st.markdown("---")
-    predict_btn = st.button("🔮 Predict Progression", type="primary", use_container_width=True)
+    predict_btn = st.button("Predict Progression", type="primary", use_container_width=True)
 
 # ══════════════════════════════════════════════════════════════
 # 主畫面
