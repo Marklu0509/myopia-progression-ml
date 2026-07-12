@@ -488,22 +488,16 @@ if MODEL_OK and predict_btn:
             ax_n.scatter(pt_ages, pt_axls, color=pt_color, s=130,
                          zorder=5, label="This patient (baseline)")
 
-        # 標注每個量測點：白底框 + 引線 + 交錯上下，避免字被線蓋住
+        # 標注每個量測點：純文字（無底色無框），上下交錯拉開避免壓在線上
         for i, (pa, paxl) in enumerate(zip(pt_ages, pt_axls)):
             visit_pctile = axl_percentile_approx(paxl, int(round(pa)), sex)
-            label_str = f"V{i+1}: {paxl:.2f} mm  (P{visit_pctile:.0f})"
+            label_str = f"V{i+1}:{paxl:.2f}\n(P{visit_pctile:.0f})"
             va = "bottom" if i % 2 == 0 else "top"
-            y_off = 0.28 if va == "bottom" else -0.28
-            ax_n.annotate(
-                label_str,
-                xy=(pa, paxl),
-                xytext=(pa, paxl + y_off),
+            y_off = 0.30 if va == "bottom" else -0.30
+            ax_n.text(
+                pa, paxl + y_off, label_str,
                 ha="center", va=va,
                 fontsize=8.5, color="#14320f", fontweight="bold",
-                bbox=dict(boxstyle="round,pad=0.3", fc="white",
-                          ec=pt_color, lw=1.0, alpha=0.92),
-                arrowprops=dict(arrowstyle="-", color=pt_color,
-                                lw=0.8, alpha=0.7),
                 zorder=6,
             )
 
@@ -525,8 +519,6 @@ if MODEL_OK and predict_btn:
             ax_n.text(proj_age + 0.08, proj_axl,
                       f"Projected +1yr\n{proj_axl:.2f} mm",
                       fontsize=7.5, color="#14320f", va="center",
-                      bbox=dict(boxstyle="round,pad=0.25", fc="white",
-                                ec=pt_color, lw=0.8, alpha=0.88),
                       zorder=6)
 
         ax_n.set_xlabel("Age (years)", fontsize=10)
