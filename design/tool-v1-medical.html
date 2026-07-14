@@ -137,13 +137,65 @@
     <!-- ============ RESULTS ============ -->
     <section class="space-y-6">
 
-      <!-- Empty state -->
-      <div id="emptyState" class="bg-white rounded-2xl shadow-card border border-teal-100/70 p-12 text-center">
-        <span class="grid place-items-center w-14 h-14 mx-auto rounded-2xl bg-brand-50 text-brand-500 mb-4">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-        </span>
-        <h3 class="text-lg font-800 font-extrabold text-ink">Ready to predict</h3>
-        <p class="text-[13.5px] text-teal-700/70 mt-1 max-w-sm mx-auto">Set the parameters on the left, then press <span class="font-semibold text-brand-600">Predict Progression</span> to see the annualized axial-length forecast, risk tier and literature comparison.</p>
+      <!-- Empty state — intro / onboarding shown before first prediction -->
+      <div id="emptyState" class="space-y-6">
+
+        <!-- Intro card -->
+        <div class="bg-white rounded-2xl shadow-card border border-teal-100/70 p-6 md:p-8">
+          <p class="text-[15.5px] leading-relaxed text-ink"><strong class="font-800 font-extrabold">ML-powered clinical decision support</strong> for pediatric myopia management. Enter patient parameters on the left to predict annualized axial-length progression.</p>
+          <p class="text-[12.5px] text-teal-700/70 mt-3 leading-relaxed">Model: <strong class="text-teal-800/90">XGBoost</strong> · Validated via LOOCV · Training cohort: n = 171 eyes · <span class="text-moderate font-semibold">For research / demonstration only — not for clinical use</span></p>
+          <div class="mt-5 flex items-center gap-3 rounded-xl bg-brand-50 border border-teal-100 px-4 py-3">
+            <svg class="shrink-0 text-brand-600" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            <p class="text-[14px] font-700 font-bold text-brand-700">Adjust parameters on the left, then click “Predict Progression”</p>
+          </div>
+        </div>
+
+        <!-- How to use + Risk Tiers -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- How to use -->
+          <div class="bg-white rounded-2xl shadow-card border border-teal-100/70 p-6">
+            <h3 class="text-lg font-800 font-extrabold text-ink mb-4">How to use</h3>
+            <ol class="space-y-3.5 text-[13.5px] leading-relaxed text-teal-800/90">
+              <li class="flex gap-3"><span class="shrink-0 grid place-items-center w-6 h-6 rounded-full bg-brand-500 text-white text-[12px] font-bold">1</span><span>Enter the patient's <strong>age, eye measurements, and treatment details</strong> on the left</span></li>
+              <li class="flex gap-3"><span class="shrink-0 grid place-items-center w-6 h-6 rounded-full bg-brand-500 text-white text-[12px] font-bold">2</span><span>Fill the <strong>early AXL visits</strong> — the early slope is the most predictive feature</span></li>
+              <li class="flex gap-3"><span class="shrink-0 grid place-items-center w-6 h-6 rounded-full bg-brand-500 text-white text-[12px] font-bold">3</span><span>Click <strong>Predict Progression</strong></span></li>
+              <li class="flex gap-3"><span class="shrink-0 grid place-items-center w-6 h-6 rounded-full bg-brand-500 text-white text-[12px] font-bold">4</span><span>Review the predicted mm/yr, risk tier, trajectory and SHAP breakdown</span></li>
+            </ol>
+          </div>
+
+          <!-- Risk Tiers -->
+          <div class="bg-white rounded-2xl shadow-card border border-teal-100/70 p-6">
+            <h3 class="text-lg font-800 font-extrabold text-ink mb-4">Risk tiers</h3>
+            <div class="overflow-hidden rounded-xl border border-teal-100">
+              <table class="w-full text-[13px]">
+                <thead>
+                  <tr class="bg-teal-50/60 text-teal-700/80 text-[11px] uppercase tracking-wider">
+                    <th class="text-left font-bold px-3 py-2">Tier</th>
+                    <th class="text-left font-bold px-3 py-2 font-mono">mm/yr</th>
+                    <th class="text-left font-bold px-3 py-2">Action</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-teal-100">
+                  <tr>
+                    <td class="px-3 py-3"><span class="inline-flex items-center gap-2 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-slow"></span>Slow</span></td>
+                    <td class="px-3 py-3 font-mono text-teal-700/80">&lt; 0.10</td>
+                    <td class="px-3 py-3 text-teal-800/85">Annual review</td>
+                  </tr>
+                  <tr>
+                    <td class="px-3 py-3"><span class="inline-flex items-center gap-2 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-moderate"></span>Moderate</span></td>
+                    <td class="px-3 py-3 font-mono text-teal-700/80">0.10–0.30</td>
+                    <td class="px-3 py-3 text-teal-800/85">3-month follow-up</td>
+                  </tr>
+                  <tr>
+                    <td class="px-3 py-3"><span class="inline-flex items-center gap-2 font-semibold"><span class="w-2.5 h-2.5 rounded-full bg-fast"></span>Fast</span></td>
+                    <td class="px-3 py-3 font-mono text-teal-700/80">≥ 0.30</td>
+                    <td class="px-3 py-3 text-teal-800/85">Escalate therapy</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Results (hidden until predict) -->
