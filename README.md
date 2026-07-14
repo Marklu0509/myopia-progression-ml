@@ -2,7 +2,7 @@
 
 > **Predicting Long-Term Axial Length Progression from Short-Term Trajectories in Pediatric Myopia Management**
 
-🚀 **[Live Demo → Streamlit App](https://marklu-myopia.streamlit.app/)
+🚀 **[Live Demo → Streamlit App](https://myopia.marklu.page/)
 
 A machine learning pipeline that uses early axial length (AXL) measurements (0–6 months) to predict annualized myopia progression (mm/yr) in children undergoing soft contact lens therapy (MiSight ± low-dose atropine). Built to support clinical decision-making and demonstrate cross-domain expertise in optometry and machine learning.
 
