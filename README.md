@@ -2,9 +2,11 @@
 
 > **Predicting Long-Term Axial Length Progression from Short-Term Trajectories in Pediatric Myopia Management**
 
-🚀 **[Live Demo → Streamlit App](https://myopia.marklu.page/)
+🚀 **[Live Demo →](https://myopia.marklu.page/)** — interactive predictor (FastAPI backend + HTML/Tailwind frontend)
 
 A machine learning pipeline that uses early axial length (AXL) measurements (0–6 months) to predict annualized myopia progression (mm/yr) in children undergoing soft contact lens therapy (MiSight ± low-dose atropine). Built to support clinical decision-making and demonstrate cross-domain expertise in optometry and machine learning.
+
+The trained XGBoost model is served through a **FastAPI** backend (`server.py` + `myopia_core.py`) behind a hand-built, responsive **HTML/Tailwind** frontend (`design/tool-v1-medical.html`) — real-time prediction, risk tiering, East-Asian normative percentiles, RCT benchmarking, and an academic-style SHAP explanation.
 
 ---
 
@@ -81,20 +83,35 @@ Raw Excel (2 clinics)
 05_visualize.py     ← Age analysis, atropine dose-response, clinic comparison
         │
         ▼
-app.py              ← Streamlit interactive demo
+save_model.py       ← Train & serialize final pipeline → model.joblib
+        │
+        ▼
+server.py           ← FastAPI: serves frontend + /predict endpoint
+myopia_core.py      ← Pure prediction core (model, norms, SHAP)
+design/…​.html       ← HTML/Tailwind interactive frontend
 ```
+
+## Architecture (serving)
+
+```
+Browser ──HTTP──►  FastAPI (server.py)
+   ▲                    │
+   │  HTML/Tailwind     ├─ GET  /         → design/tool-v1-medical.html
+   │  + fetch(/predict) └─ POST /predict  → myopia_core.predict()
+   │                             │              ├─ model.joblib (XGBoost pipeline)
+   └─────── JSON ◄───────────────┘              ├─ East-Asian AXL norms + percentile
+                                                └─ SHAP (TreeExplainer)
+```
+
+> `app.py` (the original Streamlit demo) is kept as `app_legacy_backup.py` for reference.
 
 ---
 
 ## Demo App — Input Guide
 
-The Streamlit demo (`app.py`) lets you enter a patient's clinical profile and get an instant prediction. The **Early AXL Measurements** section supports two input modes:
+The web app lets you enter a patient's clinical profile and get an instant prediction. In the **Early AXL Measurements** section, enter the number of months since treatment start (Visit 1 = month 0 / baseline) and the AXL value for each visit.
 
-**Option 1 — Enter dates + AXL**: Input the actual visit date and AXL measurement for each visit. Visit 1 is automatically treated as the treatment start date (month 0 / baseline). Subsequent visit months are calculated automatically from the date difference.
-
-**Option 2 — Enter months + AXL directly**: Input the number of months since treatment start (Visit 1 = month 0) and the AXL value. Useful when you already know the follow-up interval without looking up exact dates.
-
-In both modes, Visit 1 AXL becomes the **baseline AXL** (month 0). If at least two visits are entered, the app fits a linear slope to estimate early AXL velocity (`early_slope_6m`), which is the model's most predictive feature. A fallback slider is shown if no visits are entered, allowing the app to be used with cohort-median assumptions.
+Visit 1 AXL becomes the **baseline AXL** (month 0). If at least two visits are entered, the backend fits a linear slope to estimate early AXL velocity (`early_slope_6m`), the model's most predictive feature. A fallback baseline is used if no visits are entered, allowing the tool to run with cohort-median assumptions.
 
 ---
 
@@ -133,7 +150,11 @@ In both modes, Visit 1 AXL becomes the **baseline AXL** (month 0). If at least t
 
 ```
 myopia_ml/
-├── app.py                # Streamlit demo app
+├── server.py             # FastAPI: serves frontend + /predict
+├── myopia_core.py        # Pure prediction core (model, norms, SHAP)
+├── design/
+│   └── tool-v1-medical.html   # HTML/Tailwind interactive frontend
+├── app_legacy_backup.py  # Original Streamlit demo (reference only)
 ├── save_model.py         # Train & serialize final model
 ├── 00_anonymize.py       # De-identification (run after 01 & 02)
 ├── 01_data_prep.py       # Data cleaning & merging
@@ -143,6 +164,7 @@ myopia_ml/
 ├── 05_visualize.py       # Age & dose-response analysis
 ├── model.joblib          # Serialized XGBoost pipeline
 ├── requirements.txt
+├── .streamlit/config.toml
 ├── .gitignore            # Excludes all patient data
 ├── results/
 │   └── benchmark_table.xlsx
@@ -170,9 +192,14 @@ python 04_interpret.py
 python 05_visualize.py
 python save_model.py
 
-# 4. Launch demo app
-streamlit run app.py
+# 4. Launch the web app (FastAPI + HTML frontend)
+python -m uvicorn server:app --host 0.0.0.0 --port 8000
+#    then open http://localhost:8000
 ```
+
+> **Deployment (Azure App Service):** set the Startup Command to
+> `python -m uvicorn server:app --host 0.0.0.0 --port 8000` and push to `main`
+> (GitHub Actions auto-deploys). WebSockets are not required for this app.
 
 ---
 
