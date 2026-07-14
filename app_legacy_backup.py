@@ -30,26 +30,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── 橄欖綠主題微調 CSS（配合 config.toml [theme]）────────────────
-st.markdown("""
-<style>
-  /* 主要按鈕：橄欖綠圓角 */
-  .stButton > button[kind="primary"]{
-    background:#646F51; border:none; border-radius:12px;
-    font-weight:700; transition:background .15s;
-  }
-  .stButton > button[kind="primary"]:hover{ background:#55603F; }
-  /* 卡片感的分隔線更淡 */
-  hr{ border-color:#E4E7DB !important; }
-  /* 標題字重 */
-  h1,h2,h3{ letter-spacing:-.01em; }
-  /* 隱藏預設頁尾、選單與頂端彩虹裝飾條，讓畫面更乾淨 */
-  #MainMenu{ visibility:hidden; }
-  footer{ visibility:hidden; }
-  [data-testid="stDecoration"]{ display:none; }
-</style>
-""", unsafe_allow_html=True)
-
 # ── 載入模型 ──────────────────────────────────────────────────
 MODEL_PATH = Path(__file__).parent / "model.joblib"
 
@@ -81,17 +61,17 @@ RCT_REF = {
 # ── 風險分級 ──────────────────────────────────────────────────
 def risk_tier(y: float):
     if y >= 0.30:
-        return "🔴 Fast Progressor", "#B0472E", \
+        return "🔴 Fast Progressor", "#C00000", \
                "This patient may benefit from a treatment review. " \
                "Escalating adjunct therapy (e.g., higher atropine concentration) could be worth discussing with the patient and family, " \
                "based on clinical judgment and individual response."
     elif y >= 0.10:
-        return "🟡 Moderate Progressor", "#C08A2E", \
+        return "🟡 Moderate Progressor", "#ED7D31", \
                "Current treatment may be providing reasonable control. " \
                "A closer follow-up interval (e.g., every 3 months) might help monitor whether progression is stabilizing. " \
                "Clinical context should guide any treatment decisions."
     else:
-        return "🟢 Slow Progressor", "#3F8F5B", \
+        return "🟢 Slow Progressor", "#375623", \
                "Progression appears relatively well-controlled under current treatment. " \
                "Continuing with routine follow-up may be appropriate, though individual variation should be considered."
 
@@ -355,7 +335,7 @@ if MODEL_OK and predict_btn:
         for study, (ref_val, age_range, ethnicity) in RCT_REF.items():
             delta = y_pred - ref_val
             arrow = "▲" if delta > 0 else "▼"
-            color = "#B0472E" if delta > 0.05 else ("#3F8F5B" if delta < -0.05 else "#555")
+            color = "#C00000" if delta > 0.05 else ("#375623" if delta < -0.05 else "#555")
             # 標示 East Asian 研究（和你的台灣資料族群相近）
             ea_badge = " 🟡" if "East Asian" in ethnicity else " ⚪"
             st.markdown(
@@ -381,9 +361,9 @@ if MODEL_OK and predict_btn:
         import matplotlib.patches as mpatches
 
         fig, ax = plt.subplots(figsize=(5, 2.8))
-        zones = [(0.0, 0.10, "#3F8F5B", "Slow\n<0.10"),
-                 (0.10, 0.30, "#C08A2E", "Moderate\n0.10–0.30"),
-                 (0.30, 0.60, "#B0472E", "Fast\n≥0.30")]
+        zones = [(0.0, 0.10, "#375623", "Slow\n<0.10"),
+                 (0.10, 0.30, "#ED7D31", "Moderate\n0.10–0.30"),
+                 (0.30, 0.60, "#C00000", "Fast\n≥0.30")]
         for lo, hi, c, lbl in zones:
             ax.barh(0, hi-lo, left=lo, height=0.5, color=c, alpha=0.82)
             ax.text((lo+hi)/2, 0, lbl, ha="center", va="center",
@@ -422,25 +402,25 @@ if MODEL_OK and predict_btn:
         if pctile >= 90:
             pctile_label, pctile_color, pctile_msg = (
                 "⚠️ Very Long (≥ P90)",
-                "#B0472E",
+                "#C00000",
                 "AXL is in the top 10% for this age/sex group — significantly longer than peers."
             )
         elif pctile >= 75:
             pctile_label, pctile_color, pctile_msg = (
                 "🔴 Long (P75–P90)",
-                "#C08A2E",
+                "#ED7D31",
                 "AXL is above average — longer than ~75–90% of same-age peers."
             )
         elif pctile >= 25:
             pctile_label, pctile_color, pctile_msg = (
                 "🟢 Average (P25–P75)",
-                "#3F8F5B",
+                "#375623",
                 "AXL is within the typical range for this age and sex."
             )
         else:
             pctile_label, pctile_color, pctile_msg = (
                 "🔵 Short (< P25)",
-                "#646F51",
+                "#2E75B6",
                 "AXL is shorter than ~75% of same-age peers — low axial elongation risk."
             )
 
@@ -490,12 +470,12 @@ if MODEL_OK and predict_btn:
 
         # 常模帶
         ax_n.fill_between(ages_plot, p10_vals, p90_vals,
-                          alpha=0.13, color="#646F51")
-        ax_n.plot(ages_plot, p50_vals, color="#646F51", lw=2.2,
+                          alpha=0.13, color="#2E75B6")
+        ax_n.plot(ages_plot, p50_vals, color="#2E75B6", lw=2.2,
                   linestyle="--", label="East Asian P50 (median)")
-        ax_n.plot(ages_plot, p10_vals, color="#646F51", lw=1,
+        ax_n.plot(ages_plot, p10_vals, color="#2E75B6", lw=1,
                   linestyle=":", alpha=0.55, label="P10 / P90")
-        ax_n.plot(ages_plot, p90_vals, color="#646F51", lw=1,
+        ax_n.plot(ages_plot, p90_vals, color="#2E75B6", lw=1,
                   linestyle=":", alpha=0.55)
 
         # 病人軌跡
@@ -622,7 +602,7 @@ Unlike a black-box prediction, SHAP lets you tell the patient's family *why* the
         # 手動畫 waterfall（避免 shap plot API 版本差異）
         sorted_idx = np.argsort(np.abs(sv))[::-1][:8]
         fig2, ax2  = plt.subplots(figsize=(8, 4.5))
-        colors_shap = ["#B0472E" if s > 0 else "#34688F" for s in sv[sorted_idx]]
+        colors_shap = ["#C00000" if s > 0 else "#2E75B6" for s in sv[sorted_idx]]
         bars = ax2.barh(
             [f"{labels[i]}\n= {vals[i]:.3g}" for i in sorted_idx],
             sv[sorted_idx],

@@ -10,3 +10,11 @@ enableXsrfProtection = false
 [browser]
 # 不回傳使用統計給 Streamlit
 gatherUsageStats = false
+
+[theme]
+# 橄欖綠醫療風主題
+primaryColor = "#646F51"          # 主色（滑桿、按鈕、focus）
+backgroundColor = "#F5F6F1"       # 主畫面極淡橄欖底
+secondaryBackgroundColor = "#FFFFFF"  # 側邊欄與 widget 白底
+textColor = "#2F3626"             # 深橄欖墨字
+font = "sans serif"
